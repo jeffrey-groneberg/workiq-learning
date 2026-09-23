@@ -1,0 +1,38 @@
+{
+  "name": "workiq-showcase",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A minimal, live-only desktop walkthrough of Work IQ MCP, A2A and REST.",
+  "type": "module",
+  "main": "src/main.js",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "start": "electron .",
+    "test": "node --test test/*.test.js",
+    "test:ui": "node --test test/ui.e2e.js",
+    "package": "node scripts/package.js",
+    "workiq": "workiq"
+  },
+  "dependencies": {
+    "@azure/identity": "4.13.3",
+    "@azure/msal-node": "6.0.1",
+    "@highlightjs/cdn-assets": "11.12.0",
+    "@langchain/core": "1.2.11",
+    "@langchain/langgraph": "1.4.15",
+    "@langchain/mcp-adapters": "1.1.4",
+    "@langchain/openai": "1.5.13",
+    "@microsoft/workiq": "1.0.0",
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "deepagents": "1.13.4",
+    "dompurify": "3.4.15",
+    "langchain": "1.5.10",
+    "marked": "18.0.13"
+  },
+  "devDependencies": {
+    "@electron/packager": "20.3.0",
+    "electron": "43.7.1",
+    "playwright": "1.63.0"
+  }
+}

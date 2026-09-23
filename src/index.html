@@ -1,0 +1,367 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; connect-src 'none'; object-src 'none'; base-uri 'none'; form-action 'none'">
+  <title>Work IQ Showcase</title>
+  <script src="theme.js"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!--
+  THESIS: A live Work IQ conversation beside the implementation that produced it,
+  not a marketing dashboard. No sample answers.
+  OWN-WORLD: Clawpilot warm neutrals, rose active controls, Segoe UI labels and
+  Consolas source. Quiet borders, familiar desktop tabs; one labelled, explanatory
+  illustration in the Work IQ vs. Graph dialog, no decorative imagery.
+  STORY: Choose a protocol, connect, ask, inspect the actual wire and source.
+  FIRST VIEWPORT: Compact header and three tabs; chat at left, code at right;
+  connection controls above, composer anchored below the conversation.
+  FORM: Side-by-side code review workbench, grounded candidate 5, seed 6006b2bb;
+  constrained by the user's minimal, live-only brief.
+  FINISH: unreviewed and undocumented is unfinished; this build ends with the finish review, the verdict, and DESIGN.md
+  -->
+  <header class="app-header">
+    <div class="brand"><span class="brand-mark" aria-hidden="true">W</span><strong>Work IQ</strong><span class="subtitle">Integration lab</span></div>
+    <div class="header-actions"><span class="live-label">Live connections only</span><button type="button" data-open="capabilities-dialog">Capabilities</button><button type="button" data-open="why-dialog">Work IQ vs. Graph</button><button type="button" data-open="auth-dialog">Authentication</button><button id="settings-open" type="button">Connections</button></div>
+  </header>
+
+  <nav class="protocol-tabs" role="tablist" aria-label="Integration protocol">
+    <button id="tab-mcp" role="tab" aria-selected="true" aria-controls="workspace" data-tab="mcp">MCP server</button>
+    <button id="tab-a2a" role="tab" aria-selected="false" aria-controls="workspace" tabindex="-1" data-tab="a2a">A2A</button>
+    <button id="tab-rest" role="tab" aria-selected="false" aria-controls="workspace" tabindex="-1" data-tab="rest">REST API</button>
+  </nav>
+
+  <main id="workspace" role="tabpanel" aria-labelledby="tab-mcp">
+    <section class="connection-bar" aria-label="Current connection">
+      <div class="connection-heading">
+        <div class="route-heading"><h1 id="route-title">Your harness, with Work IQ as tools.</h1><span id="connection-status" class="status" role="status">Not connected</span></div>
+        <p id="route-description">Deep Agents runs in this app with your model and calls Work IQ tools through the local CLI (stdio).</p>
+      </div>
+      <div class="connection-actions">
+        <div id="transport-switch" class="segmented" role="group" aria-label="MCP transport">
+          <button type="button" data-transport="local" aria-pressed="true">Local</button>
+          <button type="button" data-transport="remote" aria-pressed="false">Remote</button>
+        </div>
+        <button id="connect" class="primary" type="button">Connect</button>
+      </div>
+    </section>
+
+    <div class="workspace-grid">
+      <section class="conversation" aria-label="Work IQ chat">
+        <div class="pane-heading"><h2>Conversation</h2><button id="reset" class="text-button" type="button">New chat</button></div>
+        <div id="conversation-id" class="context-line">No conversation yet</div>
+        <div id="chat-scroll" class="chat-scroll">
+          <div id="empty-state" class="empty-state">
+            <h2>Ask about your work.</h2>
+            <p>Connect your account to bring meetings, messages and documents into this chat.</p>
+            <div class="suggestions">
+              <button type="button" data-prompt="Help me prepare for my next meeting. Summarize the agenda, recent decisions and open actions. Include source references where available.">Prepare for my next meeting</button>
+              <button type="button" data-prompt="What important project decisions and risks were discussed in my recent emails and Teams messages this week? Include source references where available.">Catch up on decisions and risks</button>
+              <button type="button" data-prompt="Find documents I worked on recently. Briefly explain what each is about and include links where available.">Find my recent documents</button>
+            </div>
+          </div>
+          <div id="messages" role="log" aria-label="Chat messages" aria-live="polite" aria-relevant="additions"></div>
+          <div id="pending"></div>
+        </div>
+        <div id="chat-error" class="error-message" role="alert" hidden></div>
+        <form id="composer" class="composer">
+          <label class="sr-only" for="question">Your message to Work IQ</label>
+          <textarea id="question" rows="3" maxlength="12000" placeholder="Ask a question about your work..." required></textarea>
+          <div class="composer-actions"><span id="composer-hint">Connect to send a message.</span><button id="stop" type="button" hidden>Stop waiting</button><button id="send" class="primary" type="submit" disabled>Send</button></div>
+        </form>
+        <p class="privacy-note">Real Microsoft 365 data, read with the signed-in user's permissions. <button class="link-button" type="button" data-open="capabilities-dialog">What can change data?</button></p>
+      </section>
+
+      <aside id="integration-inspector" class="inspector" aria-label="Integration inspector">
+        <div class="pane-heading inspector-heading">
+          <div class="inspector-tabs" role="tablist" aria-label="Inspect integration">
+            <button id="inspect-source" type="button" role="tab" aria-selected="true" aria-controls="source-panel" data-inspect="source">Code</button>
+            <button id="inspect-wire" type="button" role="tab" aria-selected="false" aria-controls="wire-panel" tabindex="-1" data-inspect="wire">Flow <span id="trace-count">0</span></button>
+            <button id="inspect-guide" type="button" role="tab" aria-selected="false" aria-controls="guide-panel" tabindex="-1" data-inspect="guide">How it works</button>
+          </div>
+          <button id="expand-inspector" class="text-button" type="button" aria-expanded="false" aria-controls="integration-inspector">Expand</button>
+        </div>
+        <section id="source-panel" class="inspector-panel" role="tabpanel" aria-labelledby="inspect-source">
+          <div class="source-toolbar"><label class="sr-only" for="source-file">Source file</label><select id="source-file"></select><span id="line-count"></span></div>
+          <pre id="source-code" class="source-code" tabindex="0" aria-label="Actual application source"></pre>
+          <p class="inspector-footnote">Actual source loaded from this app, not a separate example.</p>
+        </section>
+        <section id="wire-panel" class="inspector-panel" role="tabpanel" aria-labelledby="inspect-wire" hidden>
+          <div class="source-toolbar"><span class="flow-legend"><span class="you">You</span><span class="model">Model</span><span class="workiq">Work IQ</span></span><button id="clear-trace" class="text-button" type="button">Clear</button></div>
+          <div id="trace" class="trace"><p class="placeholder">Connect or send a message to inspect the actual requests and responses.</p></div>
+          <p class="inspector-footnote">Credentials redacted. Responses can contain private work data. Kept in memory only.</p>
+        </section>
+        <section id="guide-panel" class="inspector-panel guide" role="tabpanel" aria-labelledby="inspect-guide" hidden>
+          <h2 id="guide-title"></h2>
+          <p id="guide-summary"></p>
+          <h3>Request path</h3><p id="guide-path" class="request-path"></p>
+          <h3>Who does the reasoning?</h3><p id="guide-harness"></p>
+          <h3>What it costs</h3><p id="guide-cost"></p>
+          <h3>Authentication</h3><p id="guide-auth"></p>
+          <p><button class="link-button" type="button" data-open="auth-dialog">See what all four routes need to sign in</button></p>
+          <h3>Keep in mind</h3><p id="guide-caveat"></p>
+          <p><button class="link-button" type="button" data-open="capabilities-dialog">Compare what MCP, A2A and REST can do</button></p>
+          <section id="tool-guide" class="tool-guide" aria-labelledby="tool-guide-title" hidden>
+            <h3 id="tool-guide-title">Which Work IQ tool when?</h3>
+            <p class="tool-rule"><strong>Want an answer?</strong> Use <code>ask</code>. <strong>Want the data?</strong> Use <code>fetch</code> for stored items, <code>call_function</code> for data Microsoft Graph computes, such as <code>calendarView</code> or <code>delta()</code>. <strong>Don't know where the data is?</strong> Use <code>search_paths</code>, then <code>get_schema</code>.</p>
+            <p><button class="link-button" type="button" data-open="why-dialog">Why not call Microsoft Graph directly?</button></p>
+            <h4>What a call costs</h4>
+            <p><strong>Documented</strong> in the <a href="https://aka.ms/CopilotCredits/LicensingGuide">Copilot Credits Guide</a> (September 2026): Work IQ API usage is billed in Copilot Credits on two meters. <strong>Work IQ Tools API:</strong> static, "0.1 Copilot Credit per API call for actions and tools". <strong>Work IQ Chat or Context API:</strong> variable, for "grounding, retrieval, and reasoning", driven by models, runtime, context and tools; the guide's Light, Medium and Heavy examples give no credit figures. Pay-as-you-go list price: $0.01 per credit (USD, subject to change); pre-purchase plans list 5% to 20% discounts. Work IQ APIs are not included in Microsoft Copilot licenses; Work IQ inside Microsoft Copilot's own experiences has no incremental charge.</p>
+            <p><strong>Background reasoning</strong>, per Microsoft's tool descriptions: only <code>ask</code> invokes Microsoft 365 Copilot, which reasons in the background and returns a written answer. The other tools read data, look up paths and schemas, or perform actions. In this harness, your model reasons over their results, billed as Azure OpenAI tokens.</p>
+            <p><strong>This app's reading</strong>, because Microsoft publishes no per-tool meter table: <code>ask</code> counts as Chat; the nine other tools in Microsoft's ten-tool list count as Tools API, 0.1 per <code>tools/call</code> however many paths or items it covers; Microsoft does not document how a <code>fetch</code> with several paths is counted. <code>ask</code> counts as variable only: Microsoft does not document whether 0.1 also applies. <code>fetch_blob</code> and the CLI-only tools are not classified. Confirm this reading with your Microsoft account team before you budget.</p>
+            <p><strong>Measured and estimated:</strong> the app records each answer's Work IQ requests and shows your model's tokens as the model reports them. The Copilot Credits line under an answer counts only the calls this app classifies as Tools API or Chat; other requests stay visible in Flow as not documented as billable. It multiplies the Tools API calls by 0.1, does not calculate the variable part, and is not a bill. Failed calls are counted; Microsoft does not document whether they are billed.</p>
+            <p><strong>Where to check actual usage:</strong> the Microsoft 365 admin center (Copilot › Cost management) shows aggregate usage in credits by user, group, agent and service; it can include non-billable usage and is not a per-call bill. Recommendation: to size the variable part, run a pilot and compare its aggregate usage there. Billed amounts are in Azure Cost Management, under the Microsoft Copilot Studio service; they update daily, and usage can take up to 24 hours to appear.</p>
+            <h4>Answers from Copilot</h4>
+            <dl class="tools">
+              <dt><code>ask</code><span class="tool-tag">Given to the model</span><span class="tool-tag cost">App reading: Chat, variable credits</span></dt>
+              <dd>Microsoft 365 Copilot, or a chosen agent, finds the relevant mail, chats, meetings and files, reasons over them and answers in prose with links. Best for open questions. Slower, and you see only the sources it cites. <span class="tool-example">"What did Sarah say about the launch date?"</span></dd>
+              <dt><code>list_agents</code><span class="tool-tag">Given to the model</span><span class="tool-tag cost">App reading: Tools API, 0.1 credit per call</span></dt>
+              <dd>Lists the agents available to the user; pass an agent's ID to <code>ask</code>. <span class="tool-example">Send an HR question to a published HR agent.</span></dd>
+            </dl>
+            <h4>Exact data</h4>
+            <dl class="tools">
+              <dt><code>fetch</code><span class="tool-tag">Given to the model</span><span class="tool-tag cost">App reading: Tools API, 0.1 credit per call</span></dt>
+              <dd>Reads stored items by path: messages, events, files, people. Several paths per call, one result each. Best when your model or code needs complete, precise data, or the details of an item that <code>ask</code> pointed to. For remote MCP, Microsoft documents 25 items by default, 100 at most, 10 chat messages per request, and <code>$skip</code> and <code>$skiptoken</code> blocked. <span class="tool-example">/me/messages?$filter=isRead eq false&amp;$select=subject,from</span></dd>
+              <dt><code>call_function</code><span class="tool-tag">Given to the model</span><span class="tool-tag cost">App reading: Tools API, 0.1 credit per call</span></dt>
+              <dd>Reads data that Microsoft Graph computes when you ask, one path per call: <code>calendarView</code> (meetings in a time range, recurring ones expanded), <code>delta()</code> (what changed in mail, events, contacts or chat messages), <code>/me/chats/getAllMessages()</code>, <code>/me/onlineMeetings/getAllTranscripts(…)</code>, <code>/sites/getAllSites()</code>. In <code>search_paths</code>, most show as paths ending in <code>()</code>, but <code>calendarView</code> doesn't; which exist depends on tenant policy. <span class="tool-example">Today's meetings: /me/calendarView?startDateTime=…&amp;endDateTime=…</span></dd>
+              <dt><code>fetch_blob</code><span class="tool-tag">Not given to the model</span><span class="tool-tag cost">Meter not documented</span></dt>
+              <dd>Downloads a file's bytes (PDF, Office file, photo), optionally converted to PDF, so your own code can process the document. The server's description says "Up to 4 MB for the raw file". Withheld here because Base64 content would flood the model's context.</dd>
+            </dl>
+            <p><strong>fetch or call_function?</strong> Both only read. In a test on 23 September 2026, each tool also accepted the other's paths, and both rejected paging with <code>$skiptoken</code>. So follow Microsoft's intent above rather than a hard rule; results can differ by tenant policy. Paths that <code>search_paths</code> marks as actions, such as <code>getSchedule</code>, <code>findMeetingTimes</code> and <code>/search/query</code>, need <code>do_action</code>. <code>reminderView</code>, named in the tool's own description, returned "Access denied" in that test.</p>
+            <h4>Finding paths and fields</h4>
+            <dl class="tools">
+              <dt><code>search_paths</code><span class="tool-tag">Given to the model</span><span class="tool-tag cost">App reading: Tools API, 0.1 credit per call</span></dt>
+              <dd>Lists the available paths and their supported operations. The model's first step when it doesn't know where data lives. <span class="tool-example">Filter: calendar</span></dd>
+              <dt><code>get_schema</code><span class="tool-tag">Given to the model</span><span class="tool-tag cost">App reading: Tools API, 0.1 credit per call</span></dt>
+              <dd>Returns the fields and parameters of a path and operation: which fields to <code>$select</code>, or what a create or update requires.</dd>
+            </dl>
+            <h4>Changes (blocked by default by tenant policy, per Microsoft)</h4>
+            <dl class="tools">
+              <dt><code>create_entity</code><span class="tool-tag">Withheld</span><span class="tool-tag cost">App reading: Tools API, 0.1 credit per call</span></dt>
+              <dd>Creates an item. <span class="tool-example">A meeting in /me/events, a draft in /me/messages.</span></dd>
+              <dt><code>update_entity</code><span class="tool-tag">Withheld</span><span class="tool-tag cost">App reading: Tools API, 0.1 credit per call</span></dt>
+              <dd>Changes an item. <span class="tool-example">Move a meeting to 4 pm, mark mail as read.</span></dd>
+              <dt><code>delete_entity</code><span class="tool-tag">Withheld</span><span class="tool-tag cost">App reading: Tools API, 0.1 credit per call</span></dt>
+              <dd>Deletes an item. <span class="tool-example">Delete a draft.</span></dd>
+              <dt><code>do_action</code><span class="tool-tag">Withheld</span><span class="tool-tag cost">App reading: Tools API, 0.1 credit per call</span></dt>
+              <dd>Runs an action with side effects. <span class="tool-example">Send mail, accept a meeting, forward, move to a folder.</span></dd>
+            </dl>
+            <p>Microsoft documents mutation operations as blocked by default by tenant policy; tenant administrators can enable supported mutation scenarios through that policy. The current setting can differ by tenant: see <button class="link-button" type="button" data-open="capabilities-dialog">Capabilities</button>. A harness should ask the user before each change. Use <code>get_schema</code> first to learn the required fields.</p>
+            <h4>Local CLI only (version-specific)</h4>
+            <dl class="tools">
+              <dt><code>retrieve</code><span class="tool-tag">Withheld</span><span class="tool-tag cost">Meter not documented</span></dt>
+              <dd>Raw search hits across Microsoft 365 and connected sources, with per-source metadata and citations. Useful for showing sources, but absent from the public tool reference: treat it as preview.</dd>
+              <dt><code>get_debug_link</code>, <code>accept_eula</code><span class="tool-tag">Withheld</span><span class="tool-tag cost">Meter not documented</span></dt>
+              <dd>Create a shareable debug link for a conversation, and accept the CLI license. Both need a person's explicit confirmation.</dd>
+            </dl>
+            <h4>Typical combinations</h4>
+            <ul class="tool-patterns">
+              <li><code>ask</code> → <code>fetch</code>: find with Copilot, then read the exact item it pointed to.</li>
+              <li><code>search_paths</code> → <code>get_schema</code> → <code>fetch</code>: when the model doesn't know the path.</li>
+              <li><code>fetch</code> or <code>call_function</code> → your systems: combine exact Microsoft 365 data with CRM, tickets or other tools.</li>
+            </ul>
+            <a href="https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/work-iq/mcp/tool-reference">Work IQ MCP tool reference</a>
+          </section>
+          <a id="guide-docs" href="https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/work-iq/api-overview">Read the official documentation</a>
+          <details id="discovery" hidden><summary>Discovered server details</summary><pre id="discovery-json"></pre></details>
+        </section>
+      </aside>
+    </div>
+  </main>
+
+  <dialog id="settings-dialog" aria-labelledby="settings-title">
+    <div class="dialog-heading"><h2 id="settings-title">Connections</h2><button id="settings-close" type="button" aria-label="Close connections">Close</button></div>
+    <p class="settings-intro">Local CLI, remote MCP and direct APIs have separate sign-ins. No tenant changes are made by this app.</p>
+    <p id="settings-feedback" class="settings-feedback" role="status" hidden></p>
+    <form id="settings-form">
+      <fieldset><legend>Local MCP</legend>
+        <p>Uses the bundled Microsoft Work IQ CLI and its existing token cache. No custom registration is needed; tenant consent still applies.</p>
+        <label for="local-account">CLI account <span>(optional)</span></label><input id="local-account" name="localAccount" type="email" placeholder="Use the CLI's existing account" autocomplete="off">
+        <div class="settings-actions"><button id="local-login" type="button">Sign in to CLI</button><button id="accept-eula" type="button">Accept CLI EULA</button><a href="https://github.com/microsoft/work-iq">Review EULA</a></div>
+      </fieldset>
+      <fieldset><legend>Remote MCP and direct APIs</legend>
+        <p>With the client ID left empty, remote MCP uses Microsoft's published public client on callback port 12798. A2A and REST require your own approved registration.</p>
+        <label for="tenant-id">Directory (tenant) ID <span>(your Microsoft 365 tenant)</span></label><input id="tenant-id" name="tenantId" placeholder="00000000-0000-0000-0000-000000000000" autocomplete="off" spellcheck="false">
+        <label for="client-id">Application (client) ID <span>(required for A2A and REST)</span></label><input id="client-id" name="clientId" placeholder="Leave empty for the published MCP client" autocomplete="off" spellcheck="false">
+        <p class="field-help">Public-client registration, localhost redirect and admin-consented WorkIQAgent.Ask. No client secret. Work IQ billing and user assignment are also required.</p>
+        <div class="settings-actions"><button id="api-login" type="button">Save and sign in to APIs</button><button id="signout" type="button">Clear app sign-ins</button></div>
+        <p id="auth-status" class="field-help"></p>
+        <a href="https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/work-iq/a2a/quickstart">Registration and consent guide</a>
+      </fieldset>
+      <fieldset><legend>Harness model (MCP tab)</legend>
+        <p>Deep Agents runs in this app and calls this Azure OpenAI deployment. It authenticates with your Azure CLI sign-in (<code>az login</code>); no API key. Your account needs an OpenAI data-plane role on the resource.</p>
+        <label for="llm-endpoint">Endpoint</label><input id="llm-endpoint" name="llmEndpoint" placeholder="https://my-resource.openai.azure.com" autocomplete="off" spellcheck="false">
+        <label for="llm-deployment">Deployment</label><input id="llm-deployment" name="llmDeployment" placeholder="gpt-5.1" autocomplete="off" spellcheck="false">
+        <label for="llm-reasoning">Reasoning <span>(shows the model's reasoning summary; adds latency)</span></label>
+        <select id="llm-reasoning" name="llmReasoning"><option value="">Off (model default)</option><option value="low">Low</option><option value="medium">Medium</option><option value="high">High</option></select>
+      </fieldset>
+      <fieldset><legend>Agent targeting</legend><label for="agent-id">Agent ID <span>(optional; A2A only)</span></label><input id="agent-id" name="agentId" placeholder="Default: Microsoft 365 Copilot" autocomplete="off" spellcheck="false"><p class="field-help">Pass the complete opaque agent ID. In the MCP tab, the model can discover agents with list_agents. REST uses the default Copilot conversation.</p></fieldset>
+      <div class="settings-footer"><p>Saving clears the app's chats and sign-ins.<br>The official CLI's token cache is not changed.</p><button id="settings-save" class="primary" type="submit">Save settings</button></div>
+    </form>
+  </dialog>
+  <dialog id="payload-dialog" class="flow-dialog" aria-labelledby="payload-title">
+    <div class="dialog-heading"><h2 id="payload-title">Payload</h2><button id="payload-close" type="button" aria-label="Close payload">Close</button></div>
+    <p id="payload-summary" class="dialog-summary"></p>
+    <h3 id="payload-call-title">Tool call</h3>
+    <pre id="payload-request" class="payload-code hljs"></pre>
+    <h3>Response <code id="payload-pointer"></code></h3>
+    <pre id="payload-response" class="payload-code response hljs"></pre>
+  </dialog>
+  <dialog id="connect-dialog" class="flow-dialog" aria-labelledby="connect-title">
+    <div class="dialog-heading"><h2 id="connect-title">Connecting</h2><span id="connect-elapsed" class="flow-meta"></span><button id="connect-close" type="button" aria-label="Close connection steps">Close</button></div>
+    <p id="connect-summary" class="dialog-summary" role="status"></p>
+    <div id="connect-scroll" class="connect-scroll"><ol id="connect-steps" class="flow"></ol></div>
+    <div class="settings-footer"><p>These steps stay in the Flow tab.</p><button id="connect-done" class="primary" type="button" hidden>Start chatting</button></div>
+  </dialog>
+  <dialog id="why-dialog" class="flow-dialog why-dialog" aria-labelledby="why-title">
+    <div class="dialog-heading"><h2 id="why-title">Why not call Microsoft Graph directly?</h2><button id="why-close" type="button" aria-label="Close comparison" data-close>Close</button></div>
+    <p class="why-lead">Say a user asks your agent something nobody built a tool for: “Which Planner tasks are due this week?”</p>
+    <figure class="why-figure">
+      <img src="assets/why-work-iq.jpg" width="1344" height="768" alt="Left: a developer cuts one key for one drawer in a huge wall of drawers. Right: an assistant looks up one index card, and a line leads straight to the one drawer it needs.">
+      <figcaption>AI-generated illustration (MAI-Image-2.6). Left: one hand-made key per drawer. Right: look it up in the index, then open the drawer.</figcaption>
+    </figure>
+    <div class="why-columns">
+      <section aria-labelledby="why-graph">
+        <h3 id="why-graph">With Microsoft Graph directly</h3>
+        <p>Before the agent can answer, a developer has to:</p>
+        <ol>
+          <li>Find <code>GET /me/planner/tasks</code> among Graph's 17,870 operations.</li>
+          <li>Write, test and ship a wrapper tool for it, like the one below.</li>
+          <li>Add the <code>Tasks.Read</code> permission to the app and get admin consent.</li>
+          <li>Repeat all three for every new kind of question.</li>
+        </ol>
+        <pre class="payload-code hljs" data-highlight="javascript">// Illustrative, not part of this app: one wrapper per Graph endpoint.
+// A real one also handles paging and throttling.
+const listPlannerTasks = tool(async () => {
+  const response = await fetch('https://graph.microsoft.com/v1.0/me/planner/tasks', {
+    headers: { Authorization: `Bearer ${await graphToken(['Tasks.Read'])}` },
+  });
+  if (!response.ok) throw new Error(`Graph returned ${response.status}`);
+  const { value } = await response.json();
+  return JSON.stringify(value.map(({ title, dueDateTime }) => ({ title, dueDateTime })));
+}, { name: 'list_planner_tasks', description: 'Planner tasks assigned to the user.', schema: z.object({}) });</pre>
+      </section>
+      <section aria-labelledby="why-workiq">
+        <h3 id="why-workiq">With Work IQ</h3>
+        <p>The model works it out when the question arrives, with the tools it already has:</p>
+        <ol>
+          <li><code>search_paths</code> with the filter <code>planner</code> returns 21 paths, including <code>/me/planner/tasks</code>.</li>
+          <li><code>get_schema</code> shows the fields, if the model needs them.</li>
+          <li><code>fetch</code> reads <code>/me/planner/tasks?$select=title,dueDateTime</code>.</li>
+        </ol>
+        <p>No new code and no consent per workload: Microsoft documents that a few broad Work IQ permissions gate capability, and tenant policy decides per path. In our test, <code>fetch</code> read <code>/me/planner/tasks</code> with the existing sign-in. Cost by this app's reading: two or three Tools API calls, 0.2 to 0.3 Copilot Credit, plus your model's tokens.</p>
+        <pre class="payload-code hljs" data-highlight="json">{ "path": "/me/planner/tasks", "operations": ["fetch"] }</pre>
+      </section>
+    </div>
+    <h3>Why not give the model all of Graph?</h3>
+    <table class="why-table">
+      <thead><tr><th scope="col"><span class="sr-only">Measure</span></th><th scope="col">Microsoft Graph v1.0</th><th scope="col">Work IQ</th></tr></thead>
+      <tbody>
+        <tr><th scope="row">What the model would carry</th><td>17,870 operations on 11,546 paths</td><td>14 tools; this app gives the model 6</td></tr>
+        <tr><th scope="row">Size in tokens</th><td>9.72 million for the full API description</td><td>1,209 for the 6 tool definitions; 4,402 for all 14</td></tr>
+        <tr><th scope="row">One tool per operation?</th><td>Not possible: Azure OpenAI accepts at most 128 functions per request</td><td>Not needed</td></tr>
+      </tbody>
+    </table>
+    <p class="why-note">Microsoft's design principle for Work IQ: “Agents ask for schemas at runtime (get_schema) rather than loading thousands of type definitions into context.”</p>
+    <p class="why-note">Measured on 23 September 2026 with the o200k_base tokenizer. Graph: Microsoft's API description, microsoftgraph/msgraph-metadata commit 4963f95. Work IQ: tools/list of the local CLI 1.0.0. The 128-function limit is from the Azure OpenAI REST API reference; the 21 Planner paths from a live search_paths call.</p>
+    <h3>When Graph directly is the better fit</h3>
+    <ul>
+      <li>Your own code, not a model, knows the exact endpoint, for example a calendar-to-CRM sync.</li>
+      <li>Bulk or sync jobs: Graph supports paging, <code>$batch</code>, delta tokens and change notifications. For Work IQ's <code>fetch</code>, Microsoft documents at most 100 items and 10 chat messages per request, with <code>$skip</code> and <code>$skiptoken</code> blocked.</li>
+      <li>No signed-in user: Graph supports app-only permissions; Work IQ is delegated only.</li>
+    </ul>
+    <div class="settings-footer"><p>Try the question live. It needs an MCP connection.</p><button id="why-try" class="primary" type="button">Try it in the MCP tab</button></div>
+  </dialog>
+  <dialog id="auth-dialog" class="flow-dialog why-dialog" aria-labelledby="auth-title">
+    <div class="dialog-heading"><h2 id="auth-title">Authentication: what each route needs</h2><button type="button" aria-label="Close authentication" data-close>Close</button></div>
+    <p class="why-lead">Who signs in where, and what an admin sets up once. Every route is delegated: Work IQ acts as the signed-in user, with that user's Microsoft 365 permissions. Application-only access isn't supported.</p>
+    <h3>Admin, once per tenant, for every route</h3>
+    <ul>
+      <li><strong>Enable Work IQ.</strong> A Global Administrator creates the Work IQ service principal, for example <code>az ad sp create --id fdcc1f02-fc51-4226-8753-f668596af7f7</code>. Microsoft's MCP overview notes it's created automatically on first use, apart from corner cases.</li>
+      <li><strong>Billing.</strong> A usage-based billing plan in Copilot Studio with an Azure subscription and resource group, and each user assigned to it. Until then, calls return 403; after assigning, allow 15 to 30 minutes.</li>
+      <li><strong>Consent.</strong> <code>WorkIQAgent.Ask</code> is marked admin consent required, so each app that requests it needs admin consent. Without it, the first sign-in asks for admin approval.</li>
+    </ul>
+    <section class="auth-route" aria-labelledby="auth-local">
+      <h3 id="auth-local">MCP, local</h3>
+      <ol class="auth-flow"><li><strong>This app</strong><span>Starts the bundled Work IQ CLI (<code>workiq mcp</code>) and speaks MCP over stdin and stdout. It never holds a Work IQ token.</span></li><li><strong>Work IQ CLI</strong><span>Signs the user in with Microsoft's own app registration and keeps its own token cache. First run: <code>workiq accept-eula</code>.</span></li><li><strong>Microsoft Entra ID</strong><span>Issues the CLI a delegated token for Work IQ.</span></li><li><strong>Work IQ service</strong><span>The CLI calls it with that token; Microsoft 365 data is read with the user's permissions.</span></li></ol>
+      <p class="auth-admin"><strong>Admin, once:</strong> admin consent for the Work IQ application, as the CLI prerequisites require.</p>
+    </section>
+    <section class="auth-route" aria-labelledby="auth-remote">
+      <h3 id="auth-remote">MCP, remote</h3>
+      <ol class="auth-flow"><li><strong>This app</strong><span>Browser sign-in (MSAL) with Microsoft's published Work IQ MCP client, callback port 12798, or with your own client ID.</span></li><li><strong>Microsoft Entra ID</strong><span>Issues a token for <code>WorkIQAgent.Ask</code>, the one scope the MCP endpoint's OAuth metadata advertises.</span></li><li><strong>Work IQ MCP endpoint</strong><span><code>https://workiq.svc.cloud.microsoft/mcp</code>; the token goes with every request.</span></li><li><strong>Microsoft 365</strong><span>Read with the user's permissions; changes only if the tenant's Work IQ MCP policy allows them.</span></li></ol>
+      <p class="auth-admin"><strong>Admin, once:</strong> admin consent for <code>WorkIQAgent.Ask</code> for your own client ID, and a look at the Work IQ MCP policy (Microsoft 365 admin center › Agents › Tools › Work IQ MCP). Whether Microsoft's published client needs consent in a new tenant: <strong>further research needed</strong>.</p>
+    </section>
+    <section class="auth-route" aria-labelledby="auth-a2a">
+      <h3 id="auth-a2a">A2A</h3>
+      <ol class="auth-flow"><li><strong>Your app registration</strong><span>Public client (Mobile and desktop), redirect <code>http://localhost</code>, public client flows allowed, delegated <code>WorkIQAgent.Ask</code>.</span></li><li><strong>This app</strong><span>Browser sign-in (MSAL) with your tenant ID and client ID. No secret.</span></li><li><strong>Microsoft Entra ID</strong><span>Issues a token for <code>api://workiq.svc.cloud.microsoft/WorkIQAgent.Ask</code>.</span></li><li><strong>Work IQ A2A endpoint</strong><span><code>https://workiq.svc.cloud.microsoft/a2a/</code>: JSON-RPC with the token.</span></li></ol>
+      <p class="auth-admin"><strong>Admin, once:</strong> register the app, or approve one a developer registers, and grant admin consent for <code>WorkIQAgent.Ask</code>.</p>
+    </section>
+    <section class="auth-route" aria-labelledby="auth-rest">
+      <h3 id="auth-rest">REST API</h3>
+      <ol class="auth-flow"><li><strong>Your app registration</strong><span>The same public client as for A2A, with delegated <code>WorkIQAgent.Ask</code>.</span></li><li><strong>This app</strong><span>Browser sign-in (MSAL) with your tenant ID and client ID. No secret.</span></li><li><strong>Microsoft Entra ID</strong><span>Issues a token for <code>api://workiq.svc.cloud.microsoft/WorkIQAgent.Ask</code>.</span></li><li><strong>Work IQ REST endpoint</strong><span><code>https://workiq.svc.cloud.microsoft/rest/conversations</code>, then <code>…/{id}/chat</code>, with the token.</span></li></ol>
+      <p class="auth-admin"><strong>Admin, once:</strong> the same registration and admin consent as for A2A.</p>
+    </section>
+    <p class="why-note">The MCP harness model signs in separately: your Azure CLI login (<code>az login</code>) gets an Entra token for Azure OpenAI, and your account needs a data-plane role on the resource. No API key, and no Work IQ access.</p>
+    <section class="auth-route auth-yours" aria-labelledby="auth-yours">
+      <h3 id="auth-yours">Your own desktop tool with its own harness: recommended setup</h3>
+      <ol class="auth-flow"><li><strong>Your app registration</strong><span>A public client for your tool with delegated <code>WorkIQAgent.Ask</code>. On Windows, add the broker redirect to sign in through WAM.</span></li><li><strong>Your desktop tool</strong><span>MSAL interactive sign-in in the system browser or WAM. No secret in the app.</span></li><li><strong>Microsoft Entra ID</strong><span>Issues a token for <code>WorkIQAgent.Ask</code>.</span></li><li><strong>Work IQ</strong><span>Remote MCP when your harness picks the tools; A2A or REST when Work IQ's agent should answer.</span></li></ol>
+      <p class="auth-admin"><strong>Admin, once:</strong> admin consent for your app, Work IQ enabled, the users in a billing policy, and the MCP policy set for the writes you need.</p>
+      <h4>Remote MCP with your own registration</h4>
+      <ol>
+        <li>Register a public client: the Mobile and desktop platform, redirect <code>http://localhost</code>, public client flows allowed. Add the delegated Work IQ permission <code>WorkIQAgent.Ask</code> and grant admin consent. Work IQ is listed under APIs my organization uses once it's enabled.</li>
+        <li>Sign in with MSAL: authority <code>https://login.microsoftonline.com/{tenant-id}</code>, scope <code>api://workiq.svc.cloud.microsoft/WorkIQAgent.Ask</code>. Keep the token in MSAL's cache and renew it silently.</li>
+        <li>Send it as <code>Authorization: Bearer …</code> on every Streamable HTTP request to <code>https://workiq.svc.cloud.microsoft/mcp</code>. The endpoint's OAuth metadata advertises exactly this scope and the <code>organizations</code> authority.</li>
+        <li>For users in other tenants, register the app as multitenant: each tenant's admin consents, and users sign in through their home tenant, as Microsoft documents.</li>
+      </ol>
+      <p class="why-note">In this app, enter your tenant ID and client ID in Connections; remote MCP then signs in with your registration on any localhost port. The code is in the Code tab: <code>src/auth.js</code> for MSAL, <code>src/workiq/mcp.js</code> for the token on each request. Not yet tested in this app with a custom registration.</p>
+    </section>
+    <ul>
+      <li><strong>Recommendation:</strong> use your own registration rather than Microsoft's published MCP client. Consent prompts and sign-in logs then show your tool's name, and you control its redirects and platforms.</li>
+      <li>Bundling the Work IQ CLI also works, as this app shows, but it signs in with Microsoft's registration, each user accepts its EULA, and your tool runs an extra process. Check its license terms before you ship it in a product.</li>
+      <li>If your harness runs on a server, Microsoft's quickstart points to a confidential client with a secret or certificate and the On-Behalf-Of flow.</li>
+    </ul>
+    <h3>Why this app runs without its own app registration</h3>
+    <ul>
+      <li><strong>Local MCP:</strong> the Work IQ CLI brings Microsoft's own registration. This app only starts it and never sees the token.</li>
+      <li><strong>Remote MCP:</strong> it uses the public client ID Microsoft publishes in its Work IQ MCP plugin (<code>ba081686-5d24-4bc6-a0d6-d034ecffed87</code>, <code>oauthPublicClient: true</code>, <code>redirectPort: 12798</code>). A public client has no secret, and the sign-in returns to port 12798, where this app listens.</li>
+      <li><strong>The model:</strong> the Azure CLI is Microsoft's own client too.</li>
+      <li><strong>Both MCP routes work here because this tenant already allows them:</strong> Work IQ is enabled, the user is in a billing policy, and both clients may sign in. For the CLI, Microsoft documents admin consent as a prerequisite. For the published MCP client in a new tenant: <strong>further research needed</strong>.</li>
+      <li><strong>A2A and REST do need a registration.</strong> This app doesn't reuse Microsoft's MCP client for them; Microsoft's A2A quickstart has you register your own app.</li>
+    </ul>
+    <p class="why-note">Sources: Enable your tenant for Work IQ, A2A quickstart, Work IQ permissions reference, Work IQ CLI, MCP overview and policy governance for Work IQ MCP on Microsoft Learn; <code>plugins/workiq/.mcp.json</code> in microsoft/work-iq (commit b5dbaeb). Measured on 23 September 2026: the MCP endpoint's OAuth metadata at <code>/.well-known/oauth-protected-resource/mcp</code>.</p>
+  </dialog>
+  <dialog id="capabilities-dialog" class="flow-dialog why-dialog" aria-labelledby="capabilities-title">
+    <div class="dialog-heading"><h2 id="capabilities-title">What each protocol can do</h2><button type="button" aria-label="Close capabilities" data-close>Close</button></div>
+    <p class="why-lead">Reading and changing Microsoft 365 data through MCP, A2A and REST. <strong>Yes</strong>: the cited Microsoft documentation describes it; the signed-in user's permissions still apply, and for MCP also tenant policy. <strong>Off by default</strong>: Microsoft's documented product default, not the current setting of any tenant. <strong>Not documented</strong>: the cited public documentation describes no such operation, which doesn't prove it's unavailable. <strong>Further research needed</strong>: incomplete, ambiguous or conflicting evidence.</p>
+    <div class="table-scroll">
+      <table class="why-table capability-table">
+        <thead><tr><th scope="col">Capability</th><th scope="col">MCP (local and remote)</th><th scope="col">A2A</th><th scope="col">REST API</th></tr></thead>
+        <tbody>
+          <tr><th scope="row">Read: answers in natural language</th><td><strong>Yes</strong>: <code>ask</code>, to Microsoft 365 Copilot or a chosen agent</td><td><strong>Yes</strong>: <code>SendMessage</code>, to Microsoft Copilot or a chosen agent</td><td><strong>Yes</strong>: <code>chat</code> with Microsoft 365 Copilot</td></tr>
+          <tr><th scope="row">Read: structured data by path</th><td><strong>Yes</strong>: <code>fetch</code> reads items; <code>call_function</code> reads computed data. Remote limits, per Microsoft: 25 by default, 100 at most, 10 chat messages; <code>$skip</code> and <code>$skiptoken</code> blocked. Locally, <code>$skiptoken</code> was rejected too; whether the other limits match: <strong>further research needed</strong>.</td><td><strong>Further research needed</strong>: no path-based read is documented; answers arrive as text</td><td><strong>Further research needed</strong>: no path-based read is documented; answers arrive as message text</td></tr>
+          <tr><th scope="row">Download a file</th><td><strong>Yes</strong>: <code>fetch_blob</code>; the server's description says "Up to 4 MB for the raw file"</td><td><strong>Not documented</strong></td><td><strong>Not documented</strong></td></tr>
+          <tr><th scope="row">Create</th><td><strong>Off by default</strong>: <code>create_entity</code> requests; tenant admins can enable supported mutation scenarios in MCP policy</td><td><strong>Further research needed</strong></td><td><strong>Further research needed</strong></td></tr>
+          <tr><th scope="row">Update</th><td><strong>Off by default</strong>: <code>update_entity</code> requests; tenant admins can enable supported mutation scenarios in MCP policy</td><td><strong>Further research needed</strong></td><td><strong>Further research needed</strong></td></tr>
+          <tr><th scope="row">Delete</th><td><strong>Off by default</strong>: <code>delete_entity</code> requests; tenant admins can enable supported mutation scenarios in MCP policy</td><td><strong>Further research needed</strong></td><td><strong>Further research needed</strong></td></tr>
+          <tr><th scope="row">Microsoft 365 actions, such as sending mail</th><td><strong>Off by default</strong>: <code>do_action</code> requests; tenant admins can enable supported mutation scenarios in MCP policy</td><td><strong>Further research needed</strong></td><td><strong>Further research needed</strong></td></tr>
+          <tr><th scope="row">Who allows changes</th><td>Documented layers: Entra sign-in, OAuth permissions, the user's own permissions and tenant-level MCP policy. The initial policy has no per-user, per-app, per-agent or scenario-specific templates. <strong>Further research needed</strong>: the policy setting in a given tenant, and which OAuth permissions MCP uses.</td><td><strong>Further research needed</strong></td><td><strong>Further research needed</strong></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p class="why-note">A2A and REST use delegated sign-in with <code>WorkIQAgent.Ask</code>, which the permissions reference marks as requiring admin consent. For remote MCP, this app requests the same scope, which the endpoint's OAuth metadata advertises. The local CLI signs in with Microsoft's own app registration; its scopes weren't inspected: <strong>further research needed</strong>. Application-only access isn't supported. The signed-in user's Microsoft 365 permissions always apply, and permission or policy approval doesn't guarantee that an operation succeeds.</p>
+    <p class="why-note">Measured in the local CLI 1.0.0 on 23 September 2026: <code>tools/list</code> marks <code>fetch</code>, <code>call_function</code>, <code>fetch_blob</code>, <code>retrieve</code>, <code>search_paths</code> and <code>get_schema</code> read-only. It marks <code>create_entity</code> not read-only and not destructive, and <code>update_entity</code>, <code>delete_entity</code> and <code>do_action</code> destructive; <code>ask</code> and <code>list_agents</code> carry no marks. These marks describe the tools, not what is authorized. <code>search_paths</code> lists the operations a path supports, for example <code>/planner/tasks/{plannerTask-id}</code>: fetch, update, delete; tenant policy and user permissions still decide.</p>
+    <h3>Further research needed</h3>
+    <ul>
+      <li><strong>Changes through natural-language requests.</strong> Microsoft documents no create, update, delete or action operations for A2A, REST or MCP's <code>ask</code>. Yet <code>WorkIQAgent.Ask</code> "includes read and write access to Microsoft 365 resources that are accessible to Work IQ agents", and the default A2A agent card describes an assistant for "managing emails, scheduling meetings, and organizing documents". Whether an agent changes data when asked, and under which controls, isn't documented.</li>
+      <li><strong>The MCP policy in effect in a tenant.</strong> Microsoft documents: "By default, mutation operations aren't allowed". In our test tenant on 23 September 2026, a <code>do_action</code> request with a made-up message ID returned Microsoft Graph's <code>ErrorInvalidIdMalformed</code>, so nothing was sent. This proves only that the request wasn't blocked before Graph checked it; it doesn't show whether the policy was off, set to allow the action, or evaluated at another stage. When the Policy tab is available, check Microsoft 365 admin center › Agents › Tools › Work IQ MCP › Policy. A change can take up to 24 hours.</li>
+      <li><strong>Policy for A2A and REST.</strong> Microsoft says the policy layer "can apply across Work IQ experiences", but documents it only for MCP tool requests.</li>
+      <li><strong>Which permissions MCP uses.</strong> Microsoft's MCP overview mentions four broad OAuth permissions, while the permissions reference lists only <code>WorkIQAgent.Ask</code>.</li>
+    </ul>
+    <p class="why-note">In this app, the MCP harness gives the model <code>ask</code>, <code>fetch</code>, <code>call_function</code>, <code>search_paths</code>, <code>get_schema</code> and <code>list_agents</code>, and withholds <code>create_entity</code>, <code>update_entity</code>, <code>delete_entity</code> and <code>do_action</code>. Whether an <code>ask</code> request can change data is further research needed. Withholding tools in code is not an authorization boundary.</p>
+    <p class="why-note">Sources: Work IQ MCP tool reference, policy governance for Work IQ MCP, MCP overview, A2A overview, REST chat reference and the Work IQ permissions reference on Microsoft Learn. Measured on 23 September 2026: <code>tools/list</code> of the local CLI 1.0.0 and the <code>do_action</code> probe.</p>
+  </dialog>
+  <script type="module" src="renderer.js"></script>
+</body>
+</html>

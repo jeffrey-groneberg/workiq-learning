@@ -1,0 +1,132 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-23T07:15:28Z",
+  "title": "Design System: Work IQ showcase",
+  "extensions": {
+    "colorMeta": {
+      "cp-accent": { "role": "primary", "displayName": "Rose" },
+      "cp-accent-dark": { "role": "primary", "displayName": "Dark-theme rose" },
+      "cp-bg": { "role": "neutral", "displayName": "Warm canvas" },
+      "cp-bg-dark": { "role": "neutral", "displayName": "Warm charcoal canvas" },
+      "cp-text-muted": { "role": "neutral", "displayName": "Secondary text" },
+      "cp-text-muted-dark": { "role": "neutral", "displayName": "Effective dark secondary text (body override)" }
+    },
+    "typographyMeta": {
+      "body": { "displayName": "Body", "purpose": "Default interface and conversation text; replies loosen line height." },
+      "label": { "displayName": "Label", "purpose": "Field labels, compact semibold actions and inspector tabs." },
+      "metadata": { "displayName": "Metadata", "purpose": "Message timing, composer hints and toolbar annotations." },
+      "code": { "displayName": "Source", "purpose": "Line-numbered application source." },
+      "trace": { "displayName": "Trace", "purpose": "Request/response JSON and discovered-server details." }
+    },
+    "shadows": [
+      { "name": "cp-shadow-light", "value": "0 18px 48px rgba(0, 0, 0, 0.12)", "purpose": "Dialogs in the light theme; not working panes." },
+      { "name": "cp-shadow-dark", "value": "0 18px 48px rgba(0, 0, 0, 0.32)", "purpose": "Dialogs in the dark theme; not working panes." }
+    ],
+    "motion": [
+      { "name": "button-background", "value": "background 120ms ease-out", "purpose": "Authored button hover transition." },
+      { "name": "reduced-motion", "value": "none", "purpose": "Under prefers-reduced-motion: reduce, transitions are disabled and scroll-behavior is auto, both with !important." }
+    ],
+    "breakpoints": [
+      { "name": "compact", "value": "980px" },
+      { "name": "stacked", "value": "740px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Connect, Send and Save settings share the rose action treatment.",
+      "html": "<button class=\"ds-button-primary\" type=\"button\">Connect</button>",
+      "css": ".ds-button-primary { font: 600 14px/1.5 \"Segoe UI\", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; min-height: 36px; padding: 7px 14px; border: 1px solid var(--cp-accent); border-radius: .625rem; background: var(--cp-accent); color: var(--cp-accent-fg); cursor: pointer; transition: background 120ms ease-out; } .ds-button-primary:hover:not(:disabled) { background: var(--cp-accent-hover); border-color: var(--cp-accent-hover); } .ds-button-primary:disabled { cursor: not-allowed; background: var(--cp-surface-soft); border-color: var(--cp-border); color: var(--cp-text-muted); } .ds-button-primary:focus-visible { outline: 2px solid var(--cp-accent); outline-offset: 3px; } @media (prefers-reduced-motion: reduce) { .ds-button-primary { transition: none !important; } }"
+    },
+    {
+      "name": "Secondary button",
+      "kind": "button",
+      "refersTo": "button-secondary",
+      "description": "The standard bordered action used for Connections and sign-in controls.",
+      "html": "<button class=\"ds-button-secondary\" type=\"button\">Connections</button>",
+      "css": ".ds-button-secondary { font: 600 14px/1.5 \"Segoe UI\", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; min-height: 36px; padding: 7px 14px; border: 1px solid var(--cp-border); border-radius: .625rem; background: var(--cp-surface); color: var(--cp-text); cursor: pointer; transition: background 120ms ease-out; } .ds-button-secondary:hover:not(:disabled) { background: var(--cp-surface-soft); border-color: var(--cp-border-strong); } .ds-button-secondary:disabled { cursor: not-allowed; color: var(--cp-text-muted); background: var(--cp-surface-soft); } .ds-button-secondary:focus-visible { outline: 2px solid var(--cp-accent); outline-offset: 3px; } @media (prefers-reduced-motion: reduce) { .ds-button-secondary { transition: none !important; } }"
+    },
+    {
+      "name": "Text button",
+      "kind": "button",
+      "refersTo": "button-text",
+      "description": "Small pane actions such as New chat, Clear and Expand.",
+      "html": "<button class=\"ds-button-text\" type=\"button\">New chat</button>",
+      "css": ".ds-button-text { font: 600 12px/1.5 \"Segoe UI\", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; min-height: 32px; padding: 4px 8px; border: 1px solid var(--cp-surface); border-radius: .625rem; background: var(--cp-surface); color: var(--cp-text-muted); cursor: pointer; transition: background 120ms ease-out; } .ds-button-text:hover:not(:disabled) { background: var(--cp-surface-soft); border-color: var(--cp-border-strong); } .ds-button-text:disabled { cursor: not-allowed; color: var(--cp-text-muted); background: var(--cp-surface); } .ds-button-text:focus-visible { outline: 2px solid var(--cp-accent); outline-offset: 3px; } @media (prefers-reduced-motion: reduce) { .ds-button-text { transition: none !important; } }"
+    },
+    {
+      "name": "Settings input",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Labeled single-line settings field with a strong neutral border.",
+      "html": "<label class=\"ds-field-label\" for=\"ds-local-account\">CLI account <span>(optional)</span></label><input class=\"ds-field\" id=\"ds-local-account\" type=\"email\" placeholder=\"Use the CLI's existing account\" autocomplete=\"off\">",
+      "css": ".ds-field-label { display: block; font: 600 12px/1.5 \"Segoe UI\", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; color: var(--cp-text); margin: 16px 0 6px; } .ds-field-label span { color: var(--cp-text-muted); font-weight: 400; } .ds-field { width: 100%; padding: 10px 12px; border: 1px solid var(--cp-border-strong); border-radius: 8px; background: var(--cp-surface); color: var(--cp-text); font: 13px/1.5 \"Segoe UI\", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; } .ds-field::placeholder { color: var(--cp-text-muted); opacity: 1; } .ds-field:focus-visible { outline: 2px solid var(--cp-accent); outline-offset: 3px; }"
+    },
+    {
+      "name": "Protocol tabs",
+      "kind": "nav",
+      "refersTo": "protocol-tab-selected",
+      "description": "Three protocol choices with a tinted selected tab and rose lower rule.",
+      "html": "<nav class=\"ds-protocol-tabs\" role=\"tablist\" aria-label=\"Integration protocol\"><button type=\"button\" role=\"tab\" aria-selected=\"true\">MCP server</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" tabindex=\"-1\">A2A</button><button type=\"button\" role=\"tab\" aria-selected=\"false\" tabindex=\"-1\">REST API</button></nav>",
+      "css": ".ds-protocol-tabs { display: flex; gap: 8px; padding: 0 32px; border-bottom: 1px solid var(--cp-border); background: var(--cp-bg); } .ds-protocol-tabs button { font: 600 14px/1.5 \"Segoe UI\", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; border: 0; border-radius: 8px 8px 0 0; background: var(--cp-bg); padding: 12px 20px; min-height: 48px; color: var(--cp-text-muted); border-bottom: 2px solid var(--cp-bg); cursor: pointer; transition: background 120ms ease-out; } .ds-protocol-tabs button:hover:not(:disabled) { background: var(--cp-surface-soft); border-color: var(--cp-border-strong); } .ds-protocol-tabs button:disabled { cursor: not-allowed; color: var(--cp-text-muted); background: var(--cp-bg); } .ds-protocol-tabs button[aria-selected=\"true\"] { color: var(--cp-accent); border-bottom-color: var(--cp-accent); background: var(--cp-accent-soft); } .ds-protocol-tabs button:focus-visible { outline: 2px solid var(--cp-accent); outline-offset: 3px; } @media (max-width: 980px) { .ds-protocol-tabs { padding: 0 20px; } } @media (max-width: 740px) { .ds-protocol-tabs { padding: 0 12px; } .ds-protocol-tabs button { flex: 1; padding: 10px 12px; } } @media (prefers-reduced-motion: reduce) { .ds-protocol-tabs button { transition: none !important; } }"
+    },
+    {
+      "name": "MCP transport choices",
+      "kind": "nav",
+      "refersTo": "transport-selected",
+      "description": "Local and Remote choices in a compact segmented tray.",
+      "html": "<div class=\"ds-transport\" role=\"group\" aria-label=\"MCP transport\"><button type=\"button\" aria-pressed=\"true\">Local</button><button type=\"button\" aria-pressed=\"false\">Remote</button></div>",
+      "css": ".ds-transport { display: inline-flex; gap: 4px; background: var(--cp-surface-soft); padding: 4px; border: 1px solid var(--cp-border); border-radius: .625rem; } .ds-transport button { font: 600 12px/1.5 \"Segoe UI\", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; border: 0; min-height: 28px; padding: 3px 12px; border-radius: 6px; background: var(--cp-surface-soft); color: var(--cp-text-muted); cursor: pointer; transition: background 120ms ease-out; } .ds-transport button:hover:not(:disabled) { background: var(--cp-surface-soft); border-color: var(--cp-border-strong); } .ds-transport button:disabled { cursor: not-allowed; color: var(--cp-text-muted); background: var(--cp-surface-soft); } .ds-transport button[aria-pressed=\"true\"] { color: var(--cp-accent); background: var(--cp-surface); } .ds-transport button:focus-visible { outline: 2px solid var(--cp-accent); outline-offset: 3px; } @media (prefers-reduced-motion: reduce) { .ds-transport button { transition: none !important; } }"
+    },
+    {
+      "name": "Connection status",
+      "kind": "chip",
+      "refersTo": "connection-status",
+      "description": "Text-led connection state; readiness, activity and error cues are not color-only.",
+      "html": "<span class=\"ds-status\" role=\"status\" data-state=\"idle\">Not connected</span>",
+      "css": ".ds-status { font: 600 11px/1.5 \"Segoe UI\", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; padding: 2px 8px; border: 1px solid var(--cp-border); border-radius: 6px; color: var(--cp-text-muted); white-space: nowrap; } .ds-status[data-state=\"ready\"] { color: var(--cp-text); border-color: var(--cp-border-strong); } .ds-status[data-state=\"ready\"]::before { content: \"\"; display: inline-block; width: 6px; height: 6px; border-radius: 50%; margin-right: 6px; background: var(--cp-success); } .ds-status[data-state=\"busy\"] { color: var(--cp-accent); border-color: var(--cp-accent); } .ds-status[data-state=\"error\"] { color: var(--cp-text); border-color: var(--cp-danger); }"
+    },
+    {
+      "name": "Conversation composer",
+      "kind": "custom",
+      "refersTo": "composer",
+      "description": "The bordered composer with its disconnected hint and unavailable Send action.",
+      "html": "<form class=\"ds-composer\"><textarea class=\"ds-question\" aria-label=\"Your message to Work IQ\" rows=\"3\" maxlength=\"12000\" placeholder=\"Ask a question about your work...\" required></textarea><div class=\"ds-composer-actions\"><span>Connect to send a message.</span><button class=\"ds-send\" type=\"submit\" disabled>Send</button></div></form>",
+      "css": ".ds-composer { font: 14px/1.5 \"Segoe UI\", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; color: var(--cp-text); margin: 12px 20px 0; border: 1px solid var(--cp-border-strong); border-radius: .625rem; padding: 12px; background: var(--cp-surface); } .ds-composer:focus-within { border-color: var(--cp-accent); } .ds-question { display: block; width: 100%; resize: vertical; min-height: 60px; max-height: 180px; padding: 0; border: 0; outline: none; background: var(--cp-surface); font: inherit; color: var(--cp-text); line-height: 1.5; } .ds-question::placeholder { color: var(--cp-text-muted); opacity: 1; } .ds-question:focus-visible { outline: 2px solid var(--cp-accent); outline-offset: 3px; } .ds-composer-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 8px; } .ds-composer-actions > span { flex: 1; font-size: 11px; color: var(--cp-text-muted); } .ds-send { font: inherit; font-weight: 600; min-height: 36px; padding: 7px 14px; border: 1px solid var(--cp-accent); border-radius: .625rem; background: var(--cp-accent); color: var(--cp-accent-fg); cursor: pointer; transition: background 120ms ease-out; } .ds-send:hover:not(:disabled) { background: var(--cp-accent-hover); border-color: var(--cp-accent-hover); } .ds-send:disabled { background: var(--cp-surface-soft); border-color: var(--cp-border); color: var(--cp-text-muted); cursor: not-allowed; } .ds-send:focus-visible { outline: 2px solid var(--cp-accent); outline-offset: 3px; } @media (max-width: 740px) { .ds-composer { margin-left: 12px; margin-right: 12px; } .ds-composer-actions > span { max-width: 160px; } } @media (prefers-reduced-motion: reduce) { .ds-send { transition: none !important; } }"
+    },
+    {
+      "name": "Line-numbered source",
+      "kind": "custom",
+      "refersTo": "source-code",
+      "description": "The source treatment, showing two actual lines from src/renderer.js.",
+      "html": "<div class=\"ds-source-panel\"><pre class=\"ds-source-code\" tabindex=\"0\" aria-label=\"Actual application source\"><span>const $ = selector =&gt; document.querySelector(selector);</span><span>const $$ = selector =&gt; [...document.querySelectorAll(selector)];</span></pre></div>",
+      "css": ".ds-source-panel { background: var(--cp-bg-elevated); color: var(--cp-text); } .ds-source-code { flex: 1; margin: 0; overflow: auto; padding: 16px 0; font: 12px/1.75 Consolas, \"Courier New\", Courier, monospace; tab-size: 2; counter-reset: line; } .ds-source-code > span { display: block; padding-right: 20px; min-width: max-content; } .ds-source-code > span::before { counter-increment: line; content: counter(line); display: inline-block; min-width: 44px; text-align: right; padding-right: 16px; margin-right: 12px; color: var(--cp-text-muted); border-right: 1px solid var(--cp-border); user-select: none; } .ds-source-code:focus-visible { outline: 2px solid var(--cp-accent); outline-offset: 3px; } @media (prefers-reduced-motion: reduce) { .ds-source-code { scroll-behavior: auto !important; } }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Minimal integration lab / side-by-side code-review workbench",
+    "overview": "The shipped interface is a compact, text-led Electron workbench. Warm Clawpilot neutrals separate conversation, code and connection settings; rose identifies active choices and primary actions.\n\nUI labels use the Segoe UI stack, while source and request data use the Consolas stack. Density comes from small controls, quiet borders and independently scrolling panes, not decorative imagery. One labelled, AI-generated illustration explains the Work IQ vs. Graph comparison; it carries no text.",
+    "keyCharacteristics": [
+      "Warm neutral surfaces with a rose interaction accent.",
+      "Compact UI type paired with monospaced code.",
+      "Flat, bordered working panes; modal-only shadow."
+    ],
+    "rules": [
+      { "name": "The State Before Decoration Rule", "body": "Rose marks primary actions, selections, busy status and focus; readiness and errors retain explicit text labels alongside their color cues.", "section": "colors" },
+      { "name": "The Code Has Its Own Rhythm Rule", "body": "Source, request traces and context identifiers use the mono stack; interface controls and conversation prose use the UI stack.", "section": "typography" },
+      { "name": "The Flat Work, Modal Lift Rule", "body": "Working panes are flat and border-separated; dialogs supply the modal shadow and backdrop.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do keep UI and code typography roles separate.",
+      "Do retain the effective dark secondary-text override throughout inherited content.",
+      "Do retain explicit connection labels and visible keyboard focus."
+    ],
+    "donts": [
+      "Don't substitute status color for its text label.",
+      "Don't add decorative imagery or invented response content. The one image is the labelled, text-free illustration in Work IQ vs. Graph; its facts stay in HTML.",
+      "Don't promote unused palette declarations or isolated identity measurements into reusable tokens."
+    ]
+  }
+}
