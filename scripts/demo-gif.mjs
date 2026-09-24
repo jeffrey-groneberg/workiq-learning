@@ -1,4 +1,4 @@
-// Renders docs/demo.gif for the README: a short tour of the real app with example data. A camera zooms and pans to
+// Renders docs/public/demo.gif for the README and the docs site: a short tour of the real app with example data. A camera zooms and pans to
 // what each step shows; frames are captured at twice the size, so zoomed text stays sharp.
 // npm run demo needs ffmpeg on PATH. It makes no Work IQ or model call.
 import { _electron as electron } from 'playwright';
@@ -9,7 +9,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const output = fileURLToPath(new URL('../docs/demo.gif', import.meta.url));
+const output = fileURLToPath(new URL('../docs/public/demo.gif', import.meta.url));
 // The app window in CSS pixels and its capture scale; the GIF's picture and caption band in pixels.
 const [width, height, scale] = [1100, 800, 2];
 const [gifWidth, gifHeight, bandHeight] = [800, 582, 36];
@@ -356,7 +356,7 @@ try {
     'split[a][b];[a]palettegen=max_colors=256:stats_mode=full[p];[b][p]paletteuse=dither=none:diff_mode=rectangle',
     '-fps_mode', 'vfr', '-loop', '0', output], { stdio: 'inherit' });
   const seconds = frames.reduce((sum, frame) => sum + frame.ms, 0) / 1000;
-  console.log(`docs/demo.gif: ${frames.length} frames, ${seconds.toFixed(1)} s, ${((await stat(output)).size / 1e6).toFixed(1)} MB`);
+  console.log(`docs/public/demo.gif: ${frames.length} frames, ${seconds.toFixed(1)} s, ${((await stat(output)).size / 1e6).toFixed(1)} MB`);
 } finally {
   await app.close();
   await rm(work, { recursive: true, force: true });

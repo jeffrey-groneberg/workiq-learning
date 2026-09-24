@@ -1,10 +1,13 @@
 # Work IQ integration lab
 
-![A tour of the app with example data: an answer about the next meeting streams in, each call shows its latency, tokens and estimated Copilot Credits, then the code, the three routes and what each route can read and change.](docs/demo.gif)
+![A tour of the app with example data: an answer about the next meeting streams in, each call shows its latency, tokens and estimated Copilot Credits, then the code, the three routes and what each route can read and change.](docs/public/demo.gif)
 
 A desktop app that shows three ways to build Work IQ into your own tools: MCP, A2A and the REST API. Each tab is a
 live chat over your Microsoft 365 data, next to the code behind it and a trace of each call. With MCP, your own model
 calls Work IQ's tools; with A2A and REST, Work IQ answers. The illustrations are AI-generated (MAI-Image-2.6).
+
+The [documentation](https://jeffrey-groneberg.github.io/workiq-learning/) covers each route in depth: its request path, sign-in, costs
+and code.
 
 ## What you need
 

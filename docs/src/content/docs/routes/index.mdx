@@ -1,0 +1,64 @@
+---
+title: Compare the routes
+description: "MCP, A2A and the REST API side by side: who reasons, how each signs in, what it costs and when to choose it."
+---
+
+import { Image } from 'astro:assets';
+import { CardGrid, LinkCard } from '@astrojs/starlight/components';
+import local from '../../../assets/app/route-mcp-local.jpg';
+import remote from '../../../assets/app/route-mcp-remote.jpg';
+import agent from '../../../assets/app/route-a2a.jpg';
+import rest from '../../../assets/app/route-rest.jpg';
+
+The app shows three ways to build Work IQ into your own tools, with MCP in two transports. All of them reach the same Work IQ over Microsoft 365 data. They differ in who does the reasoning, how they sign in and what they cost. Every route also needs Work IQ enabled in the tenant and a usage-based billing plan with the user assigned: see [What you need](../getting-started/what-you-need/).
+
+## Side by side
+
+|  | MCP, local | MCP, remote | A2A | REST API |
+| --- | --- | --- | --- | --- |
+| **Transport** | MCP over stdio, to the Work IQ CLI | MCP over Streamable HTTP, to the hosted Work IQ server | A2A 1.0 JSON-RPC over HTTPS | Two JSON calls over HTTPS |
+| **Who reasons** | Your harness and model | Your harness and model | The Work IQ agent | Work IQ |
+| **Your own model** | Needed | Needed | Not needed | Not needed |
+| **Sign-in** | The CLI, with its own registration | The published Work IQ MCP client, or your registration | Your public-client registration | Your public-client registration |
+| **Work IQ meter**, estimated | 0.1 credit per Tools API call; `ask` variable | As local | Chat, variable | Chat, variable |
+| **Best for** | A desktop harness that picks the tools | The same harness, without a local process | Handing a task to a Work IQ agent | A grounded chat inside your app |
+
+## Which one?
+
+- **Your harness and model should decide which Work IQ tools to call:** MCP. Use [local](mcp-local/) when the CLI's sign-in suits you, and [remote](mcp-remote/) to avoid a local process.
+- **Your agent should hand over a task and get an answer back:** [A2A](a2a/).
+- **Your app needs a grounded chat and nothing more:** the [REST API](rest/).
+- **You need exact data rather than prose:** the MCP data tools, `fetch` and `call_function`. Changes also need tenant policy: see [Capabilities](../concepts/capabilities/).
+- **There's no signed-in user, or you move data in bulk:** Microsoft Graph directly, because Work IQ is delegated only. See [Work IQ vs. Microsoft Graph](../concepts/work-iq-vs-graph/).
+
+## The routes
+
+<div class="route-cards not-content">
+  <a href="mcp-local/">
+    <Image src={local} alt="" width={640} />
+    <strong>MCP, local</strong>
+    <span>Your harness and model, with Work IQ tools through the local CLI.</span>
+  </a>
+  <a href="mcp-remote/">
+    <Image src={remote} alt="" width={640} />
+    <strong>MCP, remote</strong>
+    <span>The same harness, calling the hosted Work IQ MCP server.</span>
+  </a>
+  <a href="a2a/">
+    <Image src={agent} alt="" width={640} />
+    <strong>A2A</strong>
+    <span>Delegate a task to a Work IQ agent and keep its context.</span>
+  </a>
+  <a href="rest/">
+    <Image src={rest} alt="" width={640} />
+    <strong>REST API</strong>
+    <span>A conversation with Work IQ in two HTTP calls.</span>
+  </a>
+</div>
+
+## Next
+
+<CardGrid>
+  <LinkCard title="Capabilities" description="What each route can read, create, update and delete." href="../concepts/capabilities/" />
+  <LinkCard title="Work IQ vs. Microsoft Graph" description="When to let the model look things up, and when to call Graph yourself." href="../concepts/work-iq-vs-graph/" />
+</CardGrid>

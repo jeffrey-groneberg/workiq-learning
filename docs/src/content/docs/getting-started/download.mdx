@@ -1,0 +1,99 @@
+---
+title: Download and run
+description: Get the app for Windows, macOS or Linux, start it the first time, and run or package it from source.
+---
+
+import { LinkButton, TabItem, Tabs } from '@astrojs/starlight/components';
+
+The app runs on Windows, macOS and Linux, each for x64 and arm64, without Node.js.
+
+<LinkButton href="https://github.com/jeffrey-groneberg/workiq-learning/releases/latest" icon="download">Latest release</LinkButton>
+
+| System | CPU | File |
+| --- | --- | --- |
+| Windows | x64 | `Work-IQ-Showcase-<version>-windows-x64.zip` |
+| Windows | Arm | `Work-IQ-Showcase-<version>-windows-arm64.zip` |
+| macOS | Apple silicon | `Work-IQ-Showcase-<version>-macos-arm64.zip` |
+| macOS | Intel | `Work-IQ-Showcase-<version>-macos-x64.zip` |
+| Linux | x64 | `Work-IQ-Showcase-<version>-linux-x64.tar.gz` |
+| Linux | Arm | `Work-IQ-Showcase-<version>-linux-arm64.tar.gz` |
+
+`SHA256SUMS.txt`, next to them in each release, lists every file's checksum.
+
+## First start
+
+The builds aren't signed with a publisher certificate, so the first start takes one extra step.
+
+<Tabs syncKey="os">
+  <TabItem label="Windows" icon="seti:windows">
+    Extract the `.zip` and run `Work IQ Showcase.exe`. When SmartScreen says it protected your PC, choose **More info**, then **Run anyway**.
+  </TabItem>
+  <TabItem label="macOS" icon="apple">
+    Unzip the file and open `Work IQ Showcase.app`. When macOS blocks it, choose **Open Anyway** under **System Settings › Privacy & Security**, and confirm.
+  </TabItem>
+  <TabItem label="Linux" icon="linux">
+    Extract the `.tar.gz` and run `./work-iq-showcase`. Where user namespaces are restricted, as on Ubuntu 24.04, Chromium's sandbox helper must belong to root first. Run this once in the app's folder:
+
+    ```sh
+    sudo chown root:root chrome-sandbox && sudo chmod 4755 chrome-sandbox
+    ```
+  </TabItem>
+</Tabs>
+
+## Check the download
+
+Compare the file with its line in `SHA256SUMS.txt`, in the folder you downloaded both to.
+
+<Tabs syncKey="os">
+  <TabItem label="Windows" icon="seti:windows">
+    ```powershell
+    $file = 'Work-IQ-Showcase-<version>-windows-x64.zip'
+    $expected = (Select-String -Path SHA256SUMS.txt -SimpleMatch $file).Line.Split(' ')[0]
+    (Get-FileHash $file -Algorithm SHA256).Hash -eq $expected
+    ```
+
+    `True` means the file is intact.
+  </TabItem>
+  <TabItem label="macOS" icon="apple">
+    ```sh
+    grep macos-arm64 SHA256SUMS.txt | shasum -a 256 -c
+    ```
+  </TabItem>
+  <TabItem label="Linux" icon="linux">
+    ```sh
+    grep linux-x64 SHA256SUMS.txt | sha256sum -c
+    ```
+  </TabItem>
+</Tabs>
+
+## The Work IQ CLI for local MCP
+
+The Work IQ CLI's license doesn't allow shipping it in the downloads. For [local MCP](../../routes/mcp-local/), install it once:
+
+```sh
+npm install -g @microsoft/workiq
+```
+
+This needs Node.js. The app finds the CLI on your `PATH` and, on macOS and Linux, also on your login shell's `PATH`, for example when nvm manages Node.js. It looks each time you connect, so there's no need to restart it. If it still can't find the CLI, check that `workiq version` works in a new terminal. The other routes don't use the CLI.
+
+## Run from source
+
+With Node.js 22.12 or later:
+
+```sh
+git clone https://github.com/jeffrey-groneberg/workiq-learning.git
+cd workiq-learning
+npm ci && npm start
+```
+
+On macOS, Linux or Git Bash, `./startup.sh` does the same, and installs the dependencies only on the first run. From source, the Work IQ CLI comes with the dependencies. To pre-fill the Connect dialogs, copy `.env.example` to `.env`: see [Connect settings](../../reference/connect-settings/#pre-fill-with-env).
+
+## Package it yourself
+
+`npm run package` builds the app for the system you run it on, into `dist/`. Its options go after `--`:
+
+```sh
+npm run package -- --arch arm64 --without-cli
+```
+
+`--arch x64` or `--arch arm64` builds for another CPU, and `--without-cli` leaves out the Work IQ CLI, as the downloads do.

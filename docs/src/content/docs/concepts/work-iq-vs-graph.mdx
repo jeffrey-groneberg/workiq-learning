@@ -1,0 +1,86 @@
+---
+title: Work IQ vs. Microsoft Graph
+description: Why an agent can answer a question nobody built a tool for, and when calling Microsoft Graph directly is still the better fit.
+---
+
+import Figure from '../../../components/Figure.astro';
+import lookup from '../../../assets/app/why-work-iq.jpg';
+import context from '../../../assets/app/why-context.jpg';
+import bulk from '../../../assets/app/graph-fit.jpg';
+
+Say a user asks your agent something nobody built a tool for: "Which Planner tasks are due this week?"
+
+<Figure
+  src={lookup}
+  alt="Left: a developer cuts one key for one drawer in a huge wall of drawers. Right: an assistant looks up one index card, and a line leads straight to the one drawer it needs."
+  caption="Left: one hand-made key per drawer. Right: look it up in the index, then open the drawer."
+/>
+
+## With Microsoft Graph directly
+
+Before the agent can answer, a developer has to:
+
+1. Find `GET /me/planner/tasks` among Graph's 17,870 operations.
+2. Write, test and ship a wrapper tool for it, like the one below.
+3. Add the `Tasks.Read` permission to the app and get admin consent.
+4. Repeat all three for every new kind of question.
+
+```js title="Illustrative, not part of the app: one wrapper per Graph endpoint"
+// A real one also handles paging and throttling.
+const listPlannerTasks = tool(async () => {
+  const response = await fetch('https://graph.microsoft.com/v1.0/me/planner/tasks', {
+    headers: { Authorization: `Bearer ${await graphToken(['Tasks.Read'])}` },
+  });
+  if (!response.ok) throw new Error(`Graph returned ${response.status}`);
+  const { value } = await response.json();
+  return JSON.stringify(value.map(({ title, dueDateTime }) => ({ title, dueDateTime })));
+}, { name: 'list_planner_tasks', description: 'Planner tasks assigned to the user.', schema: z.object({}) });
+```
+
+## With Work IQ
+
+The model works it out when the question arrives, with the tools it already has:
+
+1. `search_paths` with the filter `planner` returns 21 paths, including `/me/planner/tasks`.
+2. `get_schema` shows the fields, if the model needs them.
+3. `fetch` reads `/me/planner/tasks?$select=title,dueDateTime`.
+
+```json title="One of the paths search_paths returns"
+{ "path": "/me/planner/tasks", "operations": ["fetch"] }
+```
+
+No new code and no consent per workload: a few broad Work IQ permissions gate what's possible, and tenant policy decides per path. `fetch` reads `/me/planner/tasks` with the existing sign-in, wherever tenant policy allows the path. The question costs an estimated two or three Tools API calls, 0.2 to 0.3 Copilot Credit, plus your model's tokens; see [Copilot Credits](../copilot-credits/).
+
+## Why not give the model all of Graph?
+
+| Measure | Microsoft Graph v1.0 | Work IQ |
+| --- | --- | --- |
+| What the model would carry | 17,870 operations on 11,546 paths | 14 tools; the app gives the model 6 |
+| Size in tokens | 9.72 million for the full API description | 1,209 for the 6 tool definitions; 4,402 for all 14 |
+| One tool per operation? | Not possible: Azure OpenAI accepts at most 128 functions per request | Not needed |
+
+The design principle behind Work IQ: "Agents ask for schemas at runtime (`get_schema`) rather than loading thousands of type definitions into context."
+
+<Figure
+  src={context}
+  alt="A robot staggers under a towering stack of manuals; beside it, the same robot calmly holds one index card."
+  caption="All of Graph in context, or one path looked up."
+/>
+
+:::note[How this was measured]
+On 23 September 2026, with the o200k_base tokenizer. Graph: its API description, microsoftgraph/msgraph-metadata commit 4963f95. Work IQ: `tools/list` of the local CLI 1.0.0. The 128-function limit is from the Azure OpenAI REST API reference; the 21 Planner paths are from a live `search_paths` call.
+:::
+
+## When Graph directly is the better fit
+
+- **Your own code, not a model, knows the exact endpoint**, for example a calendar-to-CRM sync.
+- **Bulk or sync jobs.** Graph supports paging, `$batch`, delta tokens and change notifications. Work IQ's `fetch` returns at most 100 items and 10 chat messages per request, with `$skip` and `$skiptoken` blocked.
+- **No signed-in user.** Graph supports app-only permissions; Work IQ is delegated only.
+
+<Figure
+  src={bulk}
+  alt="A conveyor belt moves many identical boxes from one cabinet of drawers to another, watched by a small control box."
+  caption="Known data, moved in bulk by your own code."
+/>
+
+To try the Planner question live, connect either [MCP route](../../routes/mcp-local/) in the app and ask it.

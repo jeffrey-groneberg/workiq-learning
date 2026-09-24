@@ -1,0 +1,82 @@
+---
+title: REST API
+description: A conversation with Work IQ in two HTTP calls, with sources and sensitivity labels in each reply.
+---
+
+import { LinkCard, Steps } from '@astrojs/starlight/components';
+
+**A conversation, with two HTTP calls.** A direct application integration: your app owns the chat experience and the conversation ID, and Work IQ generates the grounded reply.
+
+![A developer passes a note through a service window; a robot behind it hands back a reply.](../../../assets/app/route-rest.jpg)
+
+## When to choose it
+
+Choose REST when your application owns the chat experience and needs grounded answers from Work IQ, and nothing more: two HTTP calls, with the sources and, when present, the sensitivity label in each reply. No model of yours is involved.
+
+## Request path
+
+```text
+POST /rest/conversations  > {}
+POST /rest/conversations/{id}/chat
+Body  > message + locationHint
+```
+
+## Who does the reasoning?
+
+Work IQ generates the grounded reply; no model of yours is involved. The [MCP routes](../mcp-local/) show the harness pattern for when your application needs its own orchestration.
+
+## On the wire
+
+```http title="1. Create a conversation"
+POST /rest/conversations HTTP/1.1
+Host: workiq.svc.cloud.microsoft
+Authorization: Bearer <delegated token>
+Content-Type: application/json
+
+{}
+```
+
+The reply's `id` is the conversation ID.
+
+```http title="2. Ask a question in it"
+POST /rest/conversations/{id}/chat HTTP/1.1
+Host: workiq.svc.cloud.microsoft
+Authorization: Bearer <delegated token>
+Content-Type: application/json
+
+{
+  "message": { "text": "What did Sarah say about the launch date?" },
+  "locationHint": { "timeZone": "Europe/Berlin" }
+}
+```
+
+The reply's `messages` array ends with the answer. It carries the `text`, the sources in `attributions`, each with a `providerDisplayName` and a `seeMoreWebUrl`, and, when present, `sensitivityLabel.displayName`. Follow-up questions go to the same conversation; **New chat** in the app starts a new one.
+
+## Authentication
+
+Your approved public-client app, with delegated `WorkIQAgent.Ask` consent. No client secret, and no application-only authentication. See [Authentication](../../concepts/authentication/#rest-api).
+
+## What it costs
+
+The app calls no model of yours on this route, so it adds no model charge; a harness that adds its own model pays for that model separately. Work IQ is billed in Copilot Credits. Each chat call is a Work IQ Chat call, with variable credits: Copilot reasons in the background and returns the answer. The app counts no credits for creating a conversation. See [Copilot Credits](../../concepts/copilot-credits/).
+
+:::caution[Keep in mind]
+These are the stable `/rest` routes, not `/rest/beta` or the older Graph Chat API. The app shows source attributions and sensitivity information when the reply includes them.
+:::
+
+## Try it in the app
+
+<Steps>
+
+1. Open the **REST API** tab and click **Connect**.
+2. Enter the **Directory (tenant) ID** and **Application (client) ID** of your app registration.
+3. Click **Connect** and finish the sign-in in your browser.
+4. Ask a question. **Flow** shows both calls and their payloads.
+
+</Steps>
+
+## The code
+
+[`src/workiq/rest.js`](https://github.com/jeffrey-groneberg/workiq-learning/blob/main/src/workiq/rest.js) makes both calls, and [`src/workiq/http.js`](https://github.com/jeffrey-groneberg/workiq-learning/blob/main/src/workiq/http.js) adds the token and refuses any other host.
+
+<LinkCard title="Work IQ REST API overview" description="Conversations, chat and the reply format." href="https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/work-iq/rest/overview" />

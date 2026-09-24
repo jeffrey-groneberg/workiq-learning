@@ -1,0 +1,80 @@
+---
+title: MCP, local
+description: Your harness and model call Work IQ tools through the Work IQ CLI, a local MCP server that speaks over stdio.
+---
+
+import { LinkCard, Steps } from '@astrojs/starlight/components';
+
+**Your harness, with Work IQ as tools.** A [Deep Agents](https://docs.langchain.com/oss/javascript/deepagents/overview) harness runs in the app. Your model reads the Work IQ tools that the local Work IQ CLI offers over stdio, decides which to call and writes the answer, which streams in as the model writes it.
+
+![A robot at a laptop takes a tool from a toolbox on its own desk; a line runs from the toolbox to a tall cabinet of drawers.](../../../assets/app/route-mcp-local.jpg)
+
+## When to choose it
+
+Choose local MCP when your own harness and model should decide which Work IQ tools to call, and the harness runs on the user's computer. The Work IQ CLI signs the user in with its own app registration, so you need none of your own. In return, each user installs the CLI and accepts its EULA, and your tool runs an extra process.
+
+## Request path
+
+```text
+Your question
+  > Deep Agents + your model (this app)
+  > local Work IQ CLI (MCP over stdio)
+  > hosted Work IQ service
+```
+
+## Who does the reasoning?
+
+The harness: tool choice, planning, memory and the final answer happen here. Work IQ supplies the tools; its `ask` tool still reasons with Copilot. The app gives the model only the read-oriented tools: `ask`, `fetch`, `call_function`, `search_paths`, `get_schema` and `list_agents`. See [Work IQ MCP tools](../../reference/mcp-tools/).
+
+## On the wire
+
+The app starts the CLI as a child process, `workiq mcp`, with `--account <email>` when you set a CLI account. It then exchanges MCP JSON-RPC messages over the CLI's stdin and stdout: `initialize`, `notifications/initialized` and `tools/list`, then one `tools/call` for each tool the model picks.
+
+```json title="A tool call from the model, on the CLI's stdin"
+{
+  "jsonrpc": "2.0",
+  "id": 2,
+  "method": "tools/call",
+  "params": {
+    "name": "ask",
+    "arguments": { "question": "What did Sarah say about the launch date?" }
+  }
+}
+```
+
+`ask` returns its answer as text in `content`; data tools such as `fetch` return the data in `structuredContent`. The CLI signs in and calls the hosted Work IQ service itself, so your process never holds a Work IQ token. Before the first call, the user accepts the CLI's license with `workiq accept-eula`; `workiq auth login` signs in ahead of time.
+
+## Authentication
+
+Two sign-ins. The Work IQ CLI uses its own app registration and token cache; your tenant's admin consent still applies. The model signs in with Microsoft Entra ID through `DefaultAzureCredential`, on Azure endpoints only, or with an API key. See [Authentication](../../concepts/authentication/#mcp-local).
+
+## What it costs
+
+Two separate charges can apply:
+
+- **Copilot Credits for the Work IQ calls**, estimated at 0.1 credit for each Tools API call, such as `fetch`, and a variable amount for `ask`.
+- **Tokens for your model**, billed by its provider. With Azure OpenAI they're on your Azure bill, and reasoning tokens are billed as output tokens.
+
+The CLI needs a usage-based billing plan with the user assigned, and the app estimates local calls on the same meters as remote ones. See [Copilot Credits](../../concepts/copilot-credits/).
+
+:::caution[Keep in mind]
+Tool results, which are your Microsoft 365 data, are sent to your model endpoint. Withholding write tools in code is not an authorization boundary. Deep Agents files live in memory only.
+:::
+
+## Try it in the app
+
+<Steps>
+
+1. Install the Work IQ CLI once with `npm install -g @microsoft/workiq`; see [the Work IQ CLI for local MCP](../../getting-started/download/#the-work-iq-cli-for-local-mcp). When you run the app from source, it comes with the dependencies.
+2. Open the **MCP server** tab, choose **Local** and click **Connect**.
+3. Enter your model's endpoint, model name, API and authentication. **Test model** checks them with one short call.
+4. The first time, click **Accept CLI EULA**. **Sign in to CLI** runs `workiq auth login`.
+5. Click **Connect** and ask a question. **Flow** shows each model step and tool call with its latency, tokens and estimated Copilot Credits.
+
+</Steps>
+
+## The code
+
+The harness is [`src/harness.js`](https://github.com/jeffrey-groneberg/workiq-learning/blob/main/src/harness.js). [`src/workiq/mcp.js`](https://github.com/jeffrey-groneberg/workiq-learning/blob/main/src/workiq/mcp.js) starts the CLI and connects to it, and [`src/workiq/cli.js`](https://github.com/jeffrey-groneberg/workiq-learning/blob/main/src/workiq/cli.js) finds it on the computer.
+
+<LinkCard title="Work IQ CLI" description="Install it, sign in and check the prerequisites." href="https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/work-iq/cli" />

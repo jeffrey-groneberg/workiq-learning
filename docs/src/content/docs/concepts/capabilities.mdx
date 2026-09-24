@@ -1,0 +1,39 @@
+---
+title: Capabilities
+description: What each route can read, create, update and delete in Microsoft 365, and what a tenant admin has to allow.
+---
+
+import { Badge } from '@astrojs/starlight/components';
+import Figure from '../../../components/Figure.astro';
+import art from '../../../assets/app/capabilities.jpg';
+
+<Figure
+  src={art}
+  alt="A robot reads a document from an open drawer, while other drawers are held shut by a padlock and an administrator holds the key."
+  caption="Reading works with the user's permissions; through MCP, changes stay locked until a tenant admin allows them."
+/>
+
+Every route reads Microsoft 365 data with the signed-in user's permissions. What else each one can do:
+
+- <Badge text="Yes" variant="success" /> supported.
+- <Badge text="Off by default" variant="caution" /> a tenant admin can allow supported scenarios.
+- <Badge text="Not documented" variant="default" /> not described for this route yet.
+- <Badge text="tbd" variant="note" /> to be determined.
+
+| Capability | MCP (local and remote) | A2A | REST API |
+| --- | --- | --- | --- |
+| Answers in natural language | <Badge text="Yes" variant="success" /> `ask` | <Badge text="Yes" variant="success" /> `SendMessage` | <Badge text="Yes" variant="success" /> `chat` |
+| Structured data by path | <Badge text="Yes" variant="success" /> `fetch`, `call_function` | <Badge text="tbd" variant="note" /> | <Badge text="tbd" variant="note" /> |
+| Download a file | <Badge text="Yes" variant="success" /> `fetch_blob`, up to 4 MB | <Badge text="Not documented" variant="default" /> | <Badge text="Not documented" variant="default" /> |
+| Create | <Badge text="Off by default" variant="caution" /> `create_entity` | <Badge text="tbd" variant="note" /> | <Badge text="tbd" variant="note" /> |
+| Update | <Badge text="Off by default" variant="caution" /> `update_entity` | <Badge text="tbd" variant="note" /> | <Badge text="tbd" variant="note" /> |
+| Delete | <Badge text="Off by default" variant="caution" /> `delete_entity` | <Badge text="tbd" variant="note" /> | <Badge text="tbd" variant="note" /> |
+| Actions, such as sending mail | <Badge text="Off by default" variant="caution" /> `do_action` | <Badge text="tbd" variant="note" /> | <Badge text="tbd" variant="note" /> |
+
+## Allowing changes
+
+Changes through MCP need the tenant admin's allowance in the Work IQ MCP policy: **Microsoft 365 admin center › Agents › Tools › Work IQ MCP**. The signed-in user's own Microsoft 365 permissions always apply. The app's harness gives the model only the read tools; see [Work IQ MCP tools](../../reference/mcp-tools/).
+
+:::note[Sources]
+The [Work IQ MCP tool reference](https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/work-iq/mcp/tool-reference), policy governance for Work IQ MCP, the A2A overview and the REST chat reference.
+:::

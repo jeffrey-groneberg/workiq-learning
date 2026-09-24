@@ -1,0 +1,102 @@
+---
+title: Work IQ MCP tools
+description: Which Work IQ tool to use when, what each returns, which ones the app gives the model, and which meter each counts on.
+---
+
+import { Badge, LinkCard } from '@astrojs/starlight/components';
+
+**Want an answer?** Use `ask`. **Want the data?** Use `fetch` for stored items, and `call_function` for data Microsoft Graph computes, such as `calendarView` or `delta()`. **Don't know where the data is?** Use `search_paths`, then `get_schema`.
+
+Each tool below shows whether the app's harness gives it to the model, and the meter the app estimates it on; see [Copilot Credits](../../concepts/copilot-credits/).
+
+## Answers from Copilot
+
+### `ask`
+
+<Badge text="Given to the model" variant="success" /> <Badge text="Chat · variable" variant="note" />
+
+Microsoft 365 Copilot, or a chosen agent, finds the relevant mail, chats, meetings and files, reasons over them and answers in prose with links. Best for open questions. Slower, and you see only the sources it cites.
+
+```text title="Example"
+What did Sarah say about the launch date?
+```
+
+### `list_agents`
+
+<Badge text="Given to the model" variant="success" /> <Badge text="Tools API · 0.1" variant="note" />
+
+Lists the agents available to the user; pass an agent's ID to `ask`, for example to send an HR question to a published HR agent.
+
+## Exact data
+
+### `fetch`
+
+<Badge text="Given to the model" variant="success" /> <Badge text="Tools API · 0.1" variant="note" />
+
+Reads stored items by path: messages, events, files, people. Several paths per call, one result each. Best when your model or code needs complete, precise data, or the details of an item that `ask` pointed to. For remote MCP, `fetch` returns 25 items by default and 100 at most, and 10 chat messages per request; `$skip` and `$skiptoken` are blocked.
+
+```text title="Example path"
+/me/messages?$filter=isRead eq false&$select=subject,from
+```
+
+### `call_function`
+
+<Badge text="Given to the model" variant="success" /> <Badge text="Tools API · 0.1" variant="note" />
+
+Reads data that Microsoft Graph computes when you ask, one path per call: `calendarView` (meetings in a time range, with recurring ones expanded), `delta()` (what changed in mail, events, contacts or chat messages), `/me/chats/getAllMessages()`, `/me/onlineMeetings/getAllTranscripts(…)` and `/sites/getAllSites()`. In `search_paths`, most of them show as paths ending in `()`, but `calendarView` doesn't; which ones exist depends on tenant policy.
+
+```text title="Today's meetings"
+/me/calendarView?startDateTime=…&endDateTime=…
+```
+
+### `fetch_blob`
+
+<Badge text="Not given to the model" variant="caution" /> <Badge text="Not estimated" variant="default" />
+
+Downloads a file's bytes, such as a PDF, an Office file or a photo, optionally converted to PDF, so your own code can process the document: up to 4 MB for the raw file. The app withholds it because Base64 content would flood the model's context.
+
+:::note[fetch or call_function?]
+Both only read. In a test on 23 September 2026, each tool also accepted the other's paths, and both rejected paging with `$skiptoken`. So follow the intent above rather than a hard rule; results can differ by tenant policy. Paths that `search_paths` marks as actions, such as `getSchedule`, `findMeetingTimes` and `/search/query`, need `do_action`. `reminderView`, named in the tool's own description, returned "Access denied" in that test.
+:::
+
+## Finding paths and fields
+
+### `search_paths`
+
+<Badge text="Given to the model" variant="success" /> <Badge text="Tools API · 0.1" variant="note" />
+
+Lists the available paths and their supported operations: the model's first step when it doesn't know where the data lives. For example, the filter `calendar`.
+
+### `get_schema`
+
+<Badge text="Given to the model" variant="success" /> <Badge text="Tools API · 0.1" variant="note" />
+
+Returns the fields and parameters of a path and operation: which fields to `$select`, or what a create or update requires.
+
+## Changes
+
+Changes are blocked by default by tenant policy; tenant admins can enable supported scenarios in that policy, so the current setting can differ by tenant. See [Capabilities](../../concepts/capabilities/). A harness should ask the user before each change, and use `get_schema` first to learn the required fields. The app withholds all four tools.
+
+| Tool | What it does | Example |
+| --- | --- | --- |
+| `create_entity` | Creates an item. | A meeting in `/me/events`, a draft in `/me/messages` |
+| `update_entity` | Changes an item. | Move a meeting to 4 pm, mark mail as read |
+| `delete_entity` | Deletes an item. | Delete a draft |
+| `do_action` | Runs an action with side effects. | Send mail, accept a meeting, forward, move to a folder |
+
+The app estimates each of them as a Tools API call, at 0.1 credit.
+
+## Local CLI only
+
+These depend on the CLI version. The app withholds them, and estimates no credits for them.
+
+- **`retrieve`**: raw search hits across Microsoft 365 and connected sources, with per-source metadata and citations. Useful for showing sources, but it isn't in the public tool reference: treat it as a preview.
+- **`get_debug_link`** and **`accept_eula`**: create a shareable debug link for a conversation, and accept the CLI's license. Both need a person's explicit confirmation.
+
+## Typical combinations
+
+- **`ask` → `fetch`:** find it with Copilot, then read the exact item it pointed to.
+- **`search_paths` → `get_schema` → `fetch`:** when the model doesn't know the path.
+- **`fetch` or `call_function` → your systems:** combine exact Microsoft 365 data with your CRM, tickets or other tools.
+
+<LinkCard title="Work IQ MCP tool reference" description="Every tool's parameters and limits." href="https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/work-iq/mcp/tool-reference" />

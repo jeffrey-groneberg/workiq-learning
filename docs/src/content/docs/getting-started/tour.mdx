@@ -1,0 +1,49 @@
+---
+title: Tour of the app
+description: Pick a route, check what it needs, connect, then chat and follow each call to the data.
+---
+
+import Figure from '../../../components/Figure.astro';
+import pick from '../../../assets/app/howto-1.jpg';
+import connect from '../../../assets/app/howto-2.jpg';
+import chat from '../../../assets/app/howto-3.jpg';
+import data from '../../../assets/app/howto-4.jpg';
+import learn from '../../../assets/app/howto-5.jpg';
+
+<img class="tour-demo" src="../../demo.gif" width="800" height="618" alt="A tour of the app with example data: an answer about the next meeting streams in, each call shows its latency, tokens and estimated Copilot Credits, then the code, the three routes and what each route can read and change." />
+
+These are the six steps of the app's How to, which opens on the first start; **?** at the top right opens it again.
+
+## 1. Pick a route
+
+<Figure src={pick} alt="The app with the MCP server, A2A and REST API tabs ringed and the pointer on A2A." />
+
+**MCP server** runs a Deep Agents harness with your own model, locally through the Work IQ CLI or remotely. **A2A** hands a task to a Work IQ agent. **REST API** holds a conversation in two HTTP calls. See [Compare the routes](../../routes/).
+
+## 2. Check what it needs
+
+Each tab's **Connect** opens with what its route needs: sign-in, admin consent and model. Every route also needs Work IQ enabled in your tenant and a usage-based billing plan with you assigned. See [What you need](../what-you-need/).
+
+## 3. Connect
+
+<Figure src={connect} alt="The connect dialog for local MCP with an example model; Test model and its three passed checks are ringed." />
+
+**Connect** then asks only for that route's settings. For MCP, **Test model** checks your model before you connect. See [Connect settings](../../reference/connect-settings/).
+
+## 4. Chat and watch
+
+<Figure src={chat} alt="An answer listing three example Planner tasks; the Code, Flow and How it works tabs are ringed and the pointer is on Flow." />
+
+**Code** shows the source that runs. **Flow** shows every step between you, the model and Work IQ, with latency, tokens, a Copilot Credits estimate and the raw payloads.
+
+## 5. Follow the data
+
+<Figure src={data} alt="The 3 tasks chip under the answer, opened into a list of the tasks; the pointer is on Show in payload." />
+
+Chips under an answer list the Microsoft 365 items it read or cited; **Show in payload** marks the exact item in the response.
+
+## 6. Learn more
+
+<Figure src={learn} alt="The Learn more group in the header ringed and the pointer on Authentication." />
+
+**Capabilities**, **Work IQ vs. Graph** and **Authentication** explain the details, and each exports to PDF. They're also on this site, under [Concepts](../../concepts/capabilities/).

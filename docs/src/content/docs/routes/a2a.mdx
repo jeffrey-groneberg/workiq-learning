@@ -1,0 +1,84 @@
+---
+title: A2A
+description: Delegate a task to a Work IQ agent over A2A 1.0, and keep its context for follow-up questions.
+---
+
+import { LinkCard, Steps } from '@astrojs/starlight/components';
+
+**Delegate a task to a Work IQ agent.** The app plays the calling agent: it reads the agent card, sends a task with `SendMessage` and keeps its context for follow-up questions. It sends A2A 1.0 JSON-RPC directly; no multi-agent framework is required.
+
+![One robot hands a sealed envelope to a second robot, who stands in front of a tall cabinet of drawers.](../../../assets/app/route-a2a.jpg)
+
+## When to choose it
+
+Choose A2A when your agent should hand a whole task to a Work IQ agent and get an answer back: Microsoft 365 Copilot, or an agent you name. The Work IQ agent does the reasoning, so no model of yours is needed, and the context carries follow-up questions.
+
+## Request path
+
+```text
+GET /a2a/.well-known/agent-card.json
+POST /a2a/  > SendMessage
+Follow-up  > contextId
+```
+
+## Who does the reasoning?
+
+The remote Work IQ agent owns its reasoning. A calling harness is optional: use one to decide which agents should get which tasks, not just to speak the protocol.
+
+## On the wire
+
+Every request goes to `https://workiq.svc.cloud.microsoft` with a delegated token and the header `A2A-Version: 1.0`. To address one agent, put its ID in both paths: `/a2a/{agentId}/`.
+
+```http title="Read the agent card"
+GET /a2a/.well-known/agent-card.json HTTP/1.1
+Host: workiq.svc.cloud.microsoft
+Authorization: Bearer <delegated token>
+A2A-Version: 1.0
+```
+
+```json title="POST /a2a/: send a task"
+{
+  "jsonrpc": "2.0",
+  "id": "5f0c1c2e-6a4b-4d7e-9b1f-3e8a2d6c9a10",
+  "method": "SendMessage",
+  "params": {
+    "message": {
+      "role": "ROLE_USER",
+      "messageId": "b2e7d4a1-0c3f-4e58-8a96-7d1b5c2e4f03",
+      "parts": [{ "text": "What did Sarah say about the launch date?" }],
+      "metadata": { "Location": { "timeZone": "Europe/Berlin", "timeZoneOffset": 120 } }
+    }
+  }
+}
+```
+
+The result is a task. While its `status.state` is `TASK_STATE_SUBMITTED` or `TASK_STATE_WORKING`, poll it with `GetTask` and `{ "id": "<task ID>" }`; the app waits 750 ms between polls. A task in `TASK_STATE_COMPLETED` carries the answer in `artifacts[].parts[].text`. In `TASK_STATE_INPUT_REQUIRED` the agent needs more from the user: reply with the task's `contextId` and `taskId`. Later questions send the same `contextId`.
+
+## Authentication
+
+A delegated `WorkIQAgent.Ask` token for your approved Microsoft Entra public-client app. The route doesn't reuse the local CLI or remote MCP sign-ins. See [Authentication](../../concepts/authentication/#a2a).
+
+## What it costs
+
+The app calls no model of yours on this route, so it adds no model charge; a harness that adds its own model pays for that model separately. Work IQ is billed in Copilot Credits. Each `SendMessage` is a Work IQ Chat call, with variable credits: the agent reasons in the background and returns an answer or asks for more input. The app counts no credits for reading the agent card or polling with `GetTask`. See [Copilot Credits](../../concepts/copilot-credits/).
+
+:::caution[Keep in mind]
+`A2A-Version: 1.0` is required. Active tasks are polled with `GetTask`. **Stop waiting** in the app ends only the local wait; it doesn't promise that the server cancels the work.
+:::
+
+## Try it in the app
+
+<Steps>
+
+1. Open the **A2A** tab and click **Connect**.
+2. Enter the **Directory (tenant) ID** and **Application (client) ID** of your app registration. **Agent ID** is optional; leave it empty for Microsoft 365 Copilot.
+3. Click **Connect** and finish the sign-in in your browser.
+4. Ask a question. **Flow** shows the agent card, `SendMessage` and each `GetTask` poll.
+
+</Steps>
+
+## The code
+
+[`src/workiq/a2a.js`](https://github.com/jeffrey-groneberg/workiq-learning/blob/main/src/workiq/a2a.js) sends these requests, and [`src/workiq/http.js`](https://github.com/jeffrey-groneberg/workiq-learning/blob/main/src/workiq/http.js) adds the token and refuses any other host.
+
+<LinkCard title="A2A quickstart" description="Register the app, discover agents and send a task." href="https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/work-iq/a2a/quickstart" />
