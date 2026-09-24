@@ -1,0 +1,140 @@
+name: Release
+
+# Packages the app for Windows, macOS and Linux, each for x64 and arm64, and smoke-tests the download for the runner's own CPU.
+# A version tag that matches package.json (v1.2.3) publishes the downloads as a GitHub release. Pull requests that
+# change the app or its packaging, and manual runs, keep them as workflow artifacts for a week.
+on:
+  push:
+    tags: ['v*']
+  pull_request:
+    paths:
+      - .github/workflows/release.yml
+      - package.json
+      - package-lock.json
+      - scripts/package.js
+      - src/**
+      - test/**
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  build:
+    name: Build for ${{ matrix.os }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { os: windows, runner: windows-latest }
+          - { os: macos, runner: macos-latest }
+          - { os: linux, runner: ubuntu-latest }
+    defaults:
+      run:
+        shell: bash
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7.0.0
+        with:
+          node-version: 24
+          cache: npm
+      - name: Check that the tag matches package.json
+        if: github.ref_type == 'tag'
+        run: |
+          expected="v$(node -p "require('./package.json').version")"
+          if [ "$GITHUB_REF_NAME" != "$expected" ]; then
+            echo "::error::Tag $GITHUB_REF_NAME doesn't match package.json ($expected). Create the tag with npm version."
+            exit 1
+          fi
+      - run: npm ci --no-audit --no-fund
+      - run: npm test
+      # The Work IQ CLI's license doesn't allow redistributing it, so the app uses the copy each user installs with npm.
+      - name: Package without the Work IQ CLI
+        run: |
+          for arch in x64 arm64; do npm run package -- --arch "$arch" --without-cli; done
+          if [ -n "$(find dist -path '*/node_modules/@microsoft/workiq' -print -quit)" ]; then
+            echo "::error::A release build contains the Work IQ CLI."
+            exit 1
+          fi
+      - name: Archive
+        run: |
+          version=$(node -p "require('./package.json').version")
+          platform=$(node -p process.platform)
+          mkdir release
+          for arch in x64 arm64; do
+            build="dist/Work IQ Showcase-$platform-$arch"
+            name="Work-IQ-Showcase-$version-${{ matrix.os }}-$arch"
+            case "$RUNNER_OS" in
+              macOS) ditto -c -k --sequesterRsrc --keepParent "$build/Work IQ Showcase.app" "release/$name.zip" ;;
+              Windows) mv "$build" "dist/$name" && (cd dist && 7z a -tzip -bso0 "../release/$name.zip" "$name") ;;
+              Linux) mv "$build" "dist/$name" && tar -czf "release/$name.tar.gz" -C dist "$name" ;;
+            esac
+          done
+          ls -l release
+      - name: Smoke-test the download for this runner
+        env:
+          WORKIQ_EXPECT_NO_CLI: 1
+        run: |
+          name="Work-IQ-Showcase-$(node -p "require('./package.json').version")-${{ matrix.os }}-$(node -p process.arch)"
+          mkdir smoke
+          case "$RUNNER_OS" in
+            macOS)
+              ditto -x -k "release/$name.zip" smoke
+              WORKIQ_EXECUTABLE="smoke/Work IQ Showcase.app/Contents/MacOS/Work IQ Showcase" npm run test:smoke ;;
+            Windows)
+              7z x -bso0 -osmoke "release/$name.zip"
+              WORKIQ_EXECUTABLE="smoke/$name/Work IQ Showcase.exe" npm run test:smoke ;;
+            Linux)
+              tar -xzf "release/$name.tar.gz" -C smoke
+              # As the README tells users: Ubuntu restricts user namespaces, so Chromium's sandbox helper must belong to root.
+              sudo chown root:root "smoke/$name/chrome-sandbox"
+              sudo chmod 4755 "smoke/$name/chrome-sandbox"
+              WORKIQ_EXECUTABLE="smoke/$name/work-iq-showcase" xvfb-run -a npm run test:smoke ;;
+          esac
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ${{ matrix.os }}
+          path: release/
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: ${{ github.ref_type == 'tag' && 1 || 7 }}
+
+  release:
+    name: Publish the release
+    if: github.ref_type == 'tag'
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
+        with:
+          path: release
+          merge-multiple: true
+      - name: Create the release, or add the downloads to an existing one
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+          NOTES: |
+            Windows and macOS get a `.zip`, Linux a `.tar.gz`, each for x64 and arm64 (Apple silicon: `macos-arm64`). `SHA256SUMS.txt` has their checksums.
+            The builds aren't signed, and they leave out the Work IQ CLI: see [Download](${{ github.server_url }}/${{ github.repository }}/blob/${{ github.ref_name }}/README.md#download) for the first start and for local MCP.
+        run: |
+          cd release
+          sha256sum -- * > SHA256SUMS.txt
+          if gh release view "$TAG" > /dev/null 2>&1; then
+            gh release upload "$TAG" --clobber -- *
+          else
+            flags=(--verify-tag --generate-notes --title "Work IQ Showcase $TAG" --notes "$NOTES")
+            if [[ "$TAG" == *-* ]]; then flags+=(--prerelease); fi
+            gh release create "$TAG" "${flags[@]}" -- *
+          fi

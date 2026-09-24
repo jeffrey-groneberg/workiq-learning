@@ -1,16 +1,14 @@
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import workiq from '@microsoft/workiq/lib/install.js';
+import { cliCommand } from './cli.js';
 import { ORIGIN } from './http.js';
 
 export async function mcp({ local, getToken, account, trace, signal, transport, onClose }) {
   if (!transport) {
     if (local) {
-      const command = workiq.getBinaryPath();
-      if (!command) throw new Error(`No bundled Work IQ CLI for ${process.platform}/${process.arch}: the package ships none for this platform, or the file is missing. Reinstall with npm ci, or use remote MCP.`);
       transport = new StdioClientTransport({
-        command, args: ['mcp', ...(account ? ['--account', account] : [])], stderr: 'pipe',
+        command: await cliCommand(), args: ['mcp', ...(account ? ['--account', account] : [])], stderr: 'pipe',
       });
       transport.stderr.on('data', chunk => trace({ direction: 'diagnostic', body: chunk.toString() }));
     } else {

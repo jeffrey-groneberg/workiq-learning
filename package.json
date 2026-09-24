@@ -12,6 +12,7 @@
     "start": "electron .",
     "test": "node --test test/*.test.js",
     "test:ui": "node --test test/ui.e2e.js",
+    "test:smoke": "node --test test/smoke.e2e.js",
     "package": "node scripts/package.js",
     "screenshots": "node scripts/howto-screens.mjs",
     "workiq": "workiq"

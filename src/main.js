@@ -5,7 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { join, basename } from 'node:path';
 import { promisify } from 'node:util';
 import { execFile } from 'node:child_process';
-import workiq from '@microsoft/workiq/lib/install.js';
+import { findCli, cliCommand } from './workiq/cli.js';
 import { createAuth, validateSettings, storable, publicSettings, keptKey, sameOrigin, AZURE_AI } from './auth.js';
 import { createService, affectedRoutes } from './service.js';
 import { testModel } from './harness.js';
@@ -17,7 +17,7 @@ if (!app.isPackaged && existsSync(join(root, '.env'))) process.loadEnvFile(join(
 process.env.LANGSMITH_TRACING = process.env.LANGCHAIN_TRACING_V2 = 'false';
 // Apps launched from the macOS Finder do not inherit the shell PATH that contains az.
 if (process.platform === 'darwin') process.env.PATH = `${process.env.PATH}:/opt/homebrew/bin:/usr/local/bin`;
-const sources = ['harness.js', 'workiq/mcp.js', 'workiq/a2a.js', 'workiq/rest.js', 'workiq/http.js', 'auth.js', 'service.js', 'main.js', 'preload.cjs'];
+const sources = ['harness.js', 'workiq/mcp.js', 'workiq/cli.js', 'workiq/a2a.js', 'workiq/rest.js', 'workiq/http.js', 'auth.js', 'service.js', 'main.js', 'preload.cjs'];
 let window;
 let settings;
 let authenticationPending = false;
@@ -35,6 +35,8 @@ const service = createService(auth, event => {
 
 async function handle(action, payload = {}) {
   if (action === 'stop') { service.stop(); return {}; }
+  // The Connect dialog for local MCP asks, so it can say how to install a missing CLI.
+  if (action === 'findCli') return Boolean(await findCli());
   if (authenticationPending) throw new Error('Finish the sign-in in your browser before continuing.');
   if (action === 'initialize') {
     return {
@@ -77,6 +79,7 @@ async function handle(action, payload = {}) {
     finally { authenticationPending = false; }
   }
   if (action === 'localLogin' || action === 'acceptEula') {
+    const command = await cliCommand();
     await service.close(false, ['mcp-local']);
     if (action === 'acceptEula') {
       const result = await dialog.showMessageBox(window, {
@@ -89,8 +92,6 @@ async function handle(action, payload = {}) {
     }
     authenticationPending = true;
     try {
-      const command = workiq.getBinaryPath();
-      if (!command) throw new Error('The Work IQ CLI is not available for this platform.');
       const args = action === 'acceptEula' ? ['accept-eula']
         : ['auth', 'login', ...(settings.localAccount ? ['--account', settings.localAccount] : [])];
       const result = await promisify(execFile)(command, args, { timeout: 180_000, maxBuffer: 1_000_000 });
