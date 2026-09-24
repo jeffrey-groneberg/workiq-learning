@@ -14,13 +14,14 @@ const guides = {
   'mcp-local': {
     title: 'Your harness, with Work IQ as tools.',
     description: 'Deep Agents runs in this app with your model and calls Work IQ tools through the local CLI (stdio).',
-    summary: 'A Deep Agents harness runs in this app. Your Azure OpenAI model reads the Work IQ tools discovered over stdio, decides which to call and writes the answer.',
+    summary: 'A Deep Agents harness runs in this app. Your model reads the Work IQ tools discovered over stdio, decides which to call and writes the answer.',
     path: 'Your question\n  > Deep Agents + your model (this app)\n  > local Work IQ CLI (MCP over stdio)\n  > Microsoft-hosted Work IQ',
-    harness: 'This is the harness: tool choice, planning, memory and the final answer happen here. Work IQ supplies the tools; its ask tool still reasons with Copilot. Only read-oriented tools are exposed: ask, fetch, call_function, search_paths, get_schema, list_agents.',
-    auth: "Two sign-ins. The Work IQ CLI uses Microsoft's registration and its own cache (tenant consent applies). Your Azure CLI login gets the Entra token for the model. No API keys.",
-    caveat: 'Tool results, your Microsoft 365 data, are sent to your model deployment. Withholding write tools in code is not an authorization boundary. Deep Agents files live in memory only.',
-    cost: 'Two separate charges can apply. Copilot Credits for the Work IQ calls: see What a call costs and the tool list below. Azure OpenAI tokens for your model, on your Azure bill; reasoning tokens are billed as output tokens. Microsoft Learn lists a usage-based billing plan, with the user assigned, as a CLI prerequisite. It publishes no CLI-specific meters, so this app applies the same reading to local calls.',
+    harness: 'This is the harness: tool choice, planning, memory and the final answer happen here; the answer streams in as the model writes it. Work IQ supplies the tools; its ask tool still reasons with Copilot. Only read-oriented tools are exposed: ask, fetch, call_function, search_paths, get_schema, list_agents.',
+    auth: "Two sign-ins. The Work IQ CLI uses Microsoft's registration and its own cache (tenant consent applies). The model uses Microsoft Entra ID through DefaultAzureCredential, or an API key.",
+    caveat: 'Tool results, your Microsoft 365 data, are sent to your model endpoint. Withholding write tools in code is not an authorization boundary. Deep Agents files live in memory only.',
+    cost: 'Two separate charges can apply. Copilot Credits for the Work IQ calls: see What a call costs and the tool list below. Tokens for your model, billed by its provider; with Azure OpenAI, on your Azure bill, and reasoning tokens are billed as output tokens. Microsoft Learn lists a usage-based billing plan, with the user assigned, as a CLI prerequisite. It publishes no CLI-specific meters, so this app applies the same reading to local calls.',
     page: 'cli', source: 'harness.js',
+    art: 'route-mcp-local', artAlt: 'A robot at a laptop takes a tool from a toolbox on its own desk; a line runs from the toolbox to a tall cabinet of drawers.',
   },
   'mcp-remote': {
     title: 'The same harness. No local process.',
@@ -28,10 +29,11 @@ const guides = {
     summary: 'Identical harness code; only the transport changes. Tools are discovered on the hosted server and chosen by your model.',
     path: 'Your question\n  > Deep Agents + your model (this app)\n  > https://workiq.svc.cloud.microsoft/mcp\n  > Work IQ tools',
     harness: 'Same Deep Agents loop and read-oriented tool list as the local tab. In a customer harness, your model can combine these tools with your own systems.',
-    auth: "Browser sign-in uses the public client and callback port in Microsoft's published MCP plugin, unless you configure your own client ID. The model uses your Azure CLI login. Tenant consent still applies.",
-    caveat: 'This app does not copy credentials from Copilot or other hosts. Tool results are sent to your model deployment. Direct A2A/REST use your configured app registration.',
-    cost: 'Two separate charges can apply, as with local MCP. Copilot Credits for the Work IQ calls: see What a call costs and the tool list below. Azure OpenAI tokens for your model, on your Azure bill; reasoning tokens are billed as output tokens. The MCP handshake and tools/list are not documented as billable.',
+    auth: "Browser sign-in uses the public client and callback port in Microsoft's published MCP plugin, unless you enter your own registration when you connect. The model uses Microsoft Entra ID through DefaultAzureCredential, or an API key. Tenant consent still applies.",
+    caveat: 'This app does not copy credentials from Copilot or other hosts. Tool results are sent to your model endpoint. Direct A2A/REST use your configured app registration.',
+    cost: 'Two separate charges can apply, as with local MCP. Copilot Credits for the Work IQ calls: see What a call costs and the tool list below. Tokens for your model, billed by its provider; with Azure OpenAI, on your Azure bill, and reasoning tokens are billed as output tokens. The MCP handshake and tools/list are not documented as billable.',
     page: 'mcp/overview', source: 'harness.js',
+    art: 'route-mcp-remote', artAlt: 'A robot at a laptop with nothing else on the desk; one line runs straight to a toolbox mounted on a tall cabinet of drawers.',
   },
   a2a: {
     title: 'Delegate a task to a Work IQ agent.',
@@ -41,8 +43,9 @@ const guides = {
     harness: 'The remote Work IQ agent owns its reasoning. A caller harness is optional: use one when deciding which agents should get tasks, not just to demonstrate the protocol.',
     auth: 'A delegated WorkIQAgent.Ask token for your approved Entra public-client app. Local CLI and remote MCP sign-ins are not reused for this route.',
     caveat: 'A2A-Version: 1.0 is required. Active tasks are polled with GetTask. Stop waiting aborts the local wait; it does not promise cancellation of work on the server.',
-    cost: "This app calls no model of yours on this route, so it adds no Azure OpenAI charge; a harness that adds its own model pays for that model separately. Work IQ is billed in Copilot Credits. This app's reading: each SendMessage is Work IQ Chat, with variable credits, because Microsoft Learn lists A2A under Work IQ Chat; the agent reasons in the background and returns an answer or asks for more input. The Copilot Credits Guide gives no credit figures for Chat. Reading the agent card and GetTask polling are not documented as billable.",
+    cost: "This app calls no model of yours on this route, so it adds no model charge; a harness that adds its own model pays for that model separately. Work IQ is billed in Copilot Credits. This app's reading: each SendMessage is Work IQ Chat, with variable credits, because Microsoft Learn lists A2A under Work IQ Chat; the agent reasons in the background and returns an answer or asks for more input. The Copilot Credits Guide gives no credit figures for Chat. Reading the agent card and GetTask polling are not documented as billable.",
     page: 'a2a/quickstart', source: 'workiq/a2a.js',
+    art: 'route-a2a', artAlt: 'One robot hands a sealed envelope to a second robot, who stands in front of a tall cabinet of drawers.',
   },
   rest: {
     title: 'A conversation, with two HTTP calls.',
@@ -52,8 +55,9 @@ const guides = {
     harness: 'No model of yours is involved: Work IQ generates the grounded reply. The MCP tab shows the harness pattern for when your application needs its own orchestration.',
     auth: 'Your approved public-client app with delegated WorkIQAgent.Ask consent. No client secret and no application-only authentication.',
     caveat: 'These are the documented stable /rest routes, not /rest/beta or the older Graph Chat API. Source attributions and sensitivity information are shown when returned.',
-    cost: "This app calls no model of yours on this route, so it adds no Azure OpenAI charge; a harness that adds its own model pays for that model separately. Work IQ is billed in Copilot Credits. This app's reading: each chat call is Work IQ Chat, with variable credits, because Microsoft Learn lists REST under Work IQ Chat; Copilot reasons in the background and returns the answer. The Copilot Credits Guide gives no credit figures for Chat. Creating a conversation is not documented as billable.",
+    cost: "This app calls no model of yours on this route, so it adds no model charge; a harness that adds its own model pays for that model separately. Work IQ is billed in Copilot Credits. This app's reading: each chat call is Work IQ Chat, with variable credits, because Microsoft Learn lists REST under Work IQ Chat; Copilot reasons in the background and returns the answer. The Copilot Credits Guide gives no credit figures for Chat. Creating a conversation is not documented as billable.",
     page: 'rest/copilotconversation-chat', source: 'workiq/rest.js',
+    art: 'route-rest', artAlt: 'A developer passes a note through a service window; a robot behind it hands back a reply.',
   },
 };
 const fresh = () => ({ messages: [], trace: [], connected: false, context: '', error: '', info: null, draft: '', question: '', pending: null, open: new Set() });
@@ -86,8 +90,8 @@ function showError(error) {
 }
 function setBusy(value, label = 'Working...') {
   busy = value;
-  $$('[data-tab], [data-transport], [data-prompt], #reset, #settings-open, #connect, #why-try, #settings-form button').forEach(button => { button.disabled = value; });
-  $('#stop').hidden = !value || $('#settings-dialog').open;
+  $$('[data-tab], [data-transport], [data-prompt], #reset, #connect, #why-try, #connect-form button').forEach(button => { button.disabled = value; });
+  $('#stop').hidden = !value;
   text('#composer-hint', value ? label : 'Enter to send; Shift+Enter for a new line.');
   renderStatus();
 }
@@ -448,7 +452,7 @@ function entityChips(events) {
 function metricsLine({ totalMs, workiqMs, calls, model }) {
   const parts = [`Total ${seconds(totalMs)}`, `Work IQ latency ${seconds(workiqMs)} (${calls} ${calls === 1 ? 'call' : 'calls'})`];
   if (!model) return [...parts, 'Tokens not reported by Work IQ'].join(' · ');
-  const tokens = `Azure OpenAI: ${count(model.input + model.output)} tokens (${count(model.input)} in, ${count(model.output)} out${model.reasoning ? ` incl. ${count(model.reasoning)} reasoning` : ''})`;
+  const tokens = `Model tokens: ${count(model.input + model.output)} (${count(model.input)} in, ${count(model.output)} out${model.reasoning ? ` incl. ${count(model.reasoning)} reasoning` : ''})`;
   return [...parts, `Model latency ${seconds(model.ms)} (${model.steps} ${model.steps === 1 ? 'step' : 'steps'})`, tokens].join(' · ');
 }
 function flowItem(step, index) {
@@ -497,6 +501,11 @@ function renderTrace() {
   $('#trace').replaceChildren(list);
   if (current.pending) $('#trace').scrollTop = $('#trace').scrollHeight;
 }
+const markdown = value => DOMPurify.sanitize(marked.parse(value), {
+  USE_PROFILES: { html: true },
+  FORBID_TAGS: ['img', 'video', 'audio', 'style', 'form', 'input', 'button', 'iframe'],
+  FORBID_ATTR: ['style', 'id', 'name'], ALLOWED_URI_REGEXP: /^(https:\/\/|#)/i,
+});
 function renderPending() {
   const pending = sessions[route].pending;
   if (!pending) { $('#pending').replaceChildren(); return; }
@@ -507,8 +516,16 @@ function renderPending() {
   status.setAttribute('role', 'status');
   status.append(node('span', undefined, 'spinner'), node('span', pending.status));
   article.append(heading, status);
-  if (pending.reasoning) article.append(node('p', pending.reasoning, 'reasoning-text'));
+  const reasoning = pending.reasoning && node('p', pending.reasoning, 'reasoning-text');
+  if (reasoning) article.append(reasoning);
+  // The answer as the model streams it; the final reply replaces it when the turn ends.
+  if (pending.text) {
+    const body = node('div', undefined, 'message-body');
+    body.innerHTML = markdown(pending.text);
+    article.append(body);
+  }
   $('#pending').replaceChildren(article);
+  if (reasoning) reasoning.scrollTop = reasoning.scrollHeight;
   $('#chat-scroll').scrollTop = $('#chat-scroll').scrollHeight;
 }
 function renderMessages() {
@@ -522,11 +539,7 @@ function renderMessages() {
     if (message.elapsedMs !== undefined) heading.append(node('span', seconds(message.elapsedMs)));
     const body = node('div', undefined, 'message-body');
     if (message.role === 'user') body.textContent = message.text;
-    else body.innerHTML = DOMPurify.sanitize(marked.parse(message.text), {
-      USE_PROFILES: { html: true },
-      FORBID_TAGS: ['img', 'video', 'audio', 'style', 'form', 'input', 'button', 'iframe'],
-      FORBID_ATTR: ['style', 'id', 'name'], ALLOWED_URI_REGEXP: /^(https:\/\/|#)/i,
-    });
+    else body.innerHTML = markdown(message.text);
     const reasoning = message.trace?.map(event => event.direction === 'model' && event.body?.reasoning).filter(Boolean);
     if (reasoning?.length) {
       const details = node('details', undefined, 'reasoning');
@@ -566,6 +579,7 @@ function renderRoute() {
     text(`#${id}`, guide[key]);
   }
   $('#guide-docs').href = docs + guide.page;
+  Object.assign($('#guide-art'), { src: `assets/${guide.art}.jpg`, alt: guide.artAlt });
   $('#tool-guide').hidden = tab !== 'mcp';
   $('#discovery').hidden = !sessions[route].info;
   text('#discovery-json', JSON.stringify(sessions[route].info, null, 2));
@@ -587,38 +601,88 @@ function selectInspector(next) {
   });
   for (const name of ['source', 'wire', 'guide']) $(`#${name}-panel`).hidden = name !== inspector;
 }
-function clearSessions() {
-  for (const key of Object.keys(sessions)) sessions[key] = fresh();
-  renderRoute();
-}
-function showSettings() {
-  for (const name of ['tenantId', 'clientId', 'agentId', 'localAccount', 'llmEndpoint', 'llmDeployment', 'llmReasoning']) $(`[name="${name}"]`).value = settings[name] || '';
-  text('#auth-status', `Remote MCP: ${auth.mcp.username || 'not signed in'}. A2A / REST: ${auth.api.username || 'not signed in'}.`);
-  $('#settings-feedback').hidden = true;
-  $('#settings-dialog').showModal();
-}
+// Each tab's Connect dialog asks only for what its route needs, then shows the connection steps live.
+const routeFields = { 'mcp-local': ['cli', 'model'], 'mcp-remote': ['remote', 'model'], a2a: ['api', 'agent'], rest: ['api'] };
+const signInOf = { 'mcp-remote': 'mcp', a2a: 'api', rest: 'api' };
+const signedInWith = (scope, account) => `Signed in as ${account.username}${scope === 'mcp' && account.sharedClient ? " with Microsoft's published MCP client" : ' with your app registration'}.`;
+const required = () => $$('#connect-form [required]').filter(input => !input.closest('[hidden]'));
 function feedback(message, error = false) {
-  text('#settings-feedback', message);
-  $('#settings-feedback').dataset.error = error;
-  $('#settings-feedback').hidden = false;
+  text('#connect-feedback', message);
+  $('#connect-feedback').dataset.error = error;
+  $('#connect-feedback').hidden = !message;
 }
-async function settingsAction(action) {
+function toggleKey() {
+  const key = $('#llm-auth').value === 'key';
+  // A kept key is used again only for the host it was entered for, as in main.
+  const origin = url => URL.parse(url)?.origin;
+  const kept = settings.hasApiKey && Boolean(origin($('#llm-endpoint').value)) && origin($('#llm-endpoint').value) === origin(settings.llmEndpoint);
+  $('#llm-key-row').hidden = !key;
+  $('#llm-entra-help').hidden = key;
+  $('#llm-api-key').required = key && !kept;
+  $('#llm-api-key').placeholder = kept ? 'Kept in memory until you quit. Leave empty to keep it.' : '';
+}
+function openConnectDialog() {
+  const scope = signInOf[route];
+  clearInterval(connecting?.ticker);
+  connecting = null;
+  // What you need: the route's row of the matrix in How to, with only this MCP transport's lines.
+  const needs = $('.howto-steps .needs').cloneNode(true);
+  needs.deleteCaption();
+  needs.querySelectorAll('tbody tr').forEach(row => { row.hidden = !route.startsWith(row.dataset.route); });
+  needs.querySelectorAll('[data-mcp]').forEach(line => { line.hidden = route !== `mcp-${line.dataset.mcp}`; });
+  $('#connect-needs').replaceChildren(needs, $('.howto-steps .needs-all').cloneNode(true));
+  $$('#connect-form fieldset').forEach(fieldset => { fieldset.hidden = !routeFields[route].includes(fieldset.dataset.for); });
+  $$('#connect-form [name]').forEach(input => { input.value = settings[input.name] ?? ''; });
+  $('#connect-account').hidden = !auth[scope]?.signedIn;
+  if (scope && auth[scope].signedIn) text('#connect-account-text', signedInWith(scope, auth[scope]));
+  toggleKey(); feedback('');
+  $('#llm-test-result').hidden = true;
+  text('#connect-title', `Connect to ${workiqName[route]}`);
+  $('#connect-form').hidden = false;
+  $('#connect-progress').hidden = true;
+  $('#connect-elapsed').hidden = true;
+  if (!$('#connect-dialog').open) $('#connect-dialog').showModal();
+  // Open at the top, so What you need is in view; typing still brings the focused field into view.
+  $('#connect-dialog').scrollTop = 0;
+  (required().find(input => !input.value) || $('#connect-start')).focus({ preventScroll: true });
+}
+// Saving closes only the connections a change affects; main reports which.
+async function saveSettings() {
+  const saved = await call('settings', Object.fromEntries(new FormData($('#connect-form'))));
+  settings = saved.settings; auth = saved.auth;
+  for (const name of saved.closed) sessions[name] = fresh();
+}
+async function connect() {
+  const current = sessions[route];
+  const scope = signInOf[route];
+  current.error = ''; current.trace = [];
+  openConnect(scope && !auth[scope].signedIn ? 'Complete the Microsoft sign-in in your browser…' : firstConnectStatus[route]);
+  setBusy(true, 'Connecting to Work IQ...');
+  try {
+    if (scope && !auth[scope].signedIn) {
+      $('#stop').hidden = true;
+      text('#composer-hint', 'Complete the Microsoft sign-in in your browser.');
+      auth = await call(scope === 'mcp' ? 'signInMcp' : 'signIn');
+      current.trace.push({ route, direction: 'stage', body: { title: 'Sign in with Microsoft', detail: signedInWith(scope, auth[scope]) } });
+      if (connecting) { connecting.status = firstConnectStatus[route]; renderConnect(); }
+      $('#stop').hidden = false;
+    }
+    current.info = await call('run', { route, action: 'connect' });
+    current.connected = true;
+    current.context = current.info.conversationId || '';
+    finishConnect(`Connected in ${seconds(performance.now() - (connecting?.started ?? 0))} · ${current.info.description}`);
+    renderRoute();
+  } catch (error) {
+    showError(error);
+    finishConnect(error.message, true);
+  } finally { setBusy(false); }
+}
+async function cliAction(action) {
   setBusy(true);
   feedback('Working. Complete any sign-in in your browser.');
   try {
-    if (action === 'signIn') {
-      const saved = await call('settings', Object.fromEntries(new FormData($('#settings-form'))));
-      settings = saved.settings; auth = saved.auth;
-    }
-    clearSessions();
-    if (action === 'signIn') auth.api = { signedIn: false };
-    if (action === 'signOut') auth = { api: {}, mcp: {} };
-    const result = await call(action);
-    if (action === 'signIn' || action === 'signOut') {
-      auth = result;
-      text('#auth-status', `Remote MCP: ${auth.mcp.username || 'not signed in'}. A2A / REST: ${auth.api.username || 'not signed in'}.`);
-    }
-    feedback(result.message || (action === 'signOut' ? "App sign-ins cleared. The CLI's cache and browser session are unchanged." : 'Signed in. Close Connections and connect the selected protocol.'));
+    await saveSettings();
+    feedback((await call(action)).message);
   } catch (error) { feedback(error.message, true); }
   finally { setBusy(false); }
 }
@@ -653,42 +717,14 @@ $('#question').addEventListener('keydown', event => {
   }
 });
 $('#connect').addEventListener('click', async () => {
-  const current = sessions[route];
-  current.error = ''; current.trace = [];
-  if (route !== 'mcp-local' && route !== 'mcp-remote' && !auth.api.signedIn) {
-    showSettings(); feedback('A2A and REST need your approved app registration. Save the IDs, then sign in.', true); return;
-  }
-  if (route.startsWith('mcp-') && !current.connected && !(settings.llmEndpoint && settings.llmDeployment)) {
-    showSettings(); feedback('The MCP tab runs a Deep Agents harness. Set its model endpoint and deployment, then save.', true); return;
-  }
-  const connectingNow = !current.connected;
-  if (connectingNow) openConnect(route === 'mcp-remote' && !auth.mcp.signedIn ? 'Complete the Microsoft sign-in in your browser…' : firstConnectStatus[route]);
-  setBusy(true, 'Connecting to Work IQ...');
+  if (!sessions[route].connected) { openConnectDialog(); return; }
+  setBusy(true, 'Disconnecting...');
   try {
-    if (route === 'mcp-remote' && !auth.mcp.signedIn) {
-      $('#stop').hidden = true;
-      text('#composer-hint', 'Complete Microsoft sign-in in your browser.');
-      clearSessions();
-      auth = await call('signInMcp');
-      sessions[route].trace.push({ route, direction: 'stage', body: { title: 'Sign in with Microsoft', detail: `Signed in as ${auth.mcp.username}${auth.mcp.sharedClient ? " with Microsoft's published MCP client" : ' with your app registration'}.` } });
-      if (connecting) { connecting.status = firstConnectStatus[route]; renderConnect(); }
-      $('#stop').hidden = false;
-    }
-    const state = sessions[route];
-    if (state.connected) {
-      await call('run', { route, action: 'disconnect' });
-      sessions[route] = fresh();
-    } else {
-      state.info = await call('run', { route, action: 'connect' });
-      state.connected = true;
-      state.context = state.info.conversationId || '';
-      finishConnect(`Connected in ${seconds(performance.now() - (connecting?.started ?? 0))} · ${state.info.description}`);
-    }
+    await call('run', { route, action: 'disconnect' });
+    sessions[route] = fresh();
     renderRoute();
-  } catch (error) {
-    showError(error);
-    if (connectingNow) finishConnect(error.message, true);
-  } finally { setBusy(false); }
+  } catch (error) { showError(error); }
+  finally { setBusy(false); }
 });
 // The Connect dialog shows the background steps live, as the same timeline as Flow.
 const firstConnectStatus = { 'mcp-local': 'Starting the Work IQ CLI…', 'mcp-remote': 'Connecting to the hosted MCP endpoint…', a2a: 'Reading the agent card…', rest: 'Creating a conversation…' };
@@ -696,7 +732,9 @@ function openConnect(status) {
   connecting = { route, started: performance.now(), status, done: false, failed: false, summary: '' };
   text('#connect-elapsed', seconds(0));
   connecting.ticker = setInterval(() => text('#connect-elapsed', seconds(performance.now() - connecting.started)), 200);
-  $('#connect-dialog').showModal();
+  $('#connect-form').hidden = true;
+  $('#connect-progress').hidden = false;
+  if (!$('#connect-dialog').open) $('#connect-dialog').showModal();
   renderConnect();
 }
 function finishConnect(summary, failed = false) {
@@ -704,7 +742,7 @@ function finishConnect(summary, failed = false) {
   clearInterval(connecting.ticker);
   Object.assign(connecting, { done: !failed, failed, summary });
   renderConnect();
-  if (!failed) $('#connect-done').focus();
+  $(failed ? '#connect-back' : '#connect-done').focus();
 }
 function renderConnect() {
   if (!connecting) return;
@@ -717,16 +755,87 @@ function renderConnect() {
   $('#connect-summary').classList.toggle('error', connecting.failed);
   $('#connect-elapsed').hidden = !running;
   $('#connect-done').hidden = !connecting.done;
+  $('#connect-back').hidden = !connecting.failed;
   $('#connect-scroll').scrollTop = $('#connect-scroll').scrollHeight;
 }
 $('#connect-close').addEventListener('click', () => $('#connect-dialog').close());
 $('#connect-done').addEventListener('click', () => { $('#connect-dialog').close(); $('#question').focus(); });
+$('#connect-back').addEventListener('click', openConnectDialog);
+$('#llm-auth').addEventListener('change', toggleKey);
+$('#llm-endpoint').addEventListener('input', toggleKey);
+// Test model checks the form's model settings with one short call, without saving them.
+function showChecks(checks) {
+  $('#llm-test-result').replaceChildren(...checks.map(({ ok, text: line }) => {
+    const item = node('li', line);
+    item.dataset.state = ok === undefined ? 'pending' : ok ? 'ok' : 'fail';
+    return item;
+  }));
+  $('#llm-test-result').hidden = false;
+}
+$('#llm-test').addEventListener('click', async () => {
+  const missing = required().find(input => input.closest('[data-for="model"]') && !input.value.trim());
+  if (missing) { showChecks([{ ok: false, text: `${missing.labels[0].firstChild.textContent.trim()} is required.` }]); missing.focus(); return; }
+  showChecks([{ text: 'Testing the model…' }]);
+  setBusy(true, 'Testing the model...');
+  try { showChecks(await call('testModel', Object.fromEntries(new FormData($('#connect-form'))))); }
+  catch (error) { showChecks([{ ok: false, text: error.message }]); }
+  finally { setBusy(false); }
+});
+// A changed model setting makes the last result stale.
+$('[data-for="model"]').addEventListener('input', () => { $('#llm-test-result').hidden = true; });
+$('#connect-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (busy) return;
+  const missing = required().find(input => !input.value.trim());
+  if (missing) { feedback(`${missing.labels[0].firstChild.textContent.trim()} is required.`, true); missing.focus(); return; }
+  setBusy(true);
+  try { await saveSettings(); }
+  catch (error) { feedback(error.message, true); return; }
+  finally { setBusy(false); }
+  await connect();
+});
+$('#local-login').addEventListener('click', () => cliAction('localLogin'));
+$('#accept-eula').addEventListener('click', () => cliAction('acceptEula'));
+$('#connect-signout').addEventListener('click', async () => {
+  const target = signInOf[route];
+  setBusy(true);
+  try {
+    auth = await call('signOut', { target });
+    for (const name of target === 'mcp' ? ['mcp-remote'] : ['a2a', 'rest']) sessions[name] = fresh();
+    $('#connect-account').hidden = true;
+    feedback("Signed out of this app. Your browser's Microsoft session is unchanged.");
+  } catch (error) { feedback(error.message, true); }
+  finally { setBusy(false); }
+});
 $('#connect-dialog').addEventListener('close', () => { clearInterval(connecting?.ticker); connecting = null; $('#connect-steps').replaceChildren(); });
 $('#payload-close').addEventListener('click', () => $('#payload-dialog').close());
 // Explanatory dialogs (Capabilities, Work IQ vs. Graph); the Graph comparison's question can be tried live.
 $$('[data-open]').forEach(button => button.addEventListener('click', () => $(`#${button.dataset.open}`).showModal()));
 $$('[data-close]').forEach(button => button.addEventListener('click', () => button.closest('dialog').close()));
 $$('dialog').forEach(dialog => dialog.addEventListener('scroll', () => dialog.classList.toggle('scrolled', dialog.scrollTop > 0), { passive: true }));
+// Export PDF: the chapter's content without its controls goes into #print-root, which only print CSS shows.
+async function exportChapter(dialog, button) {
+  const status = dialog.querySelector('.export-status');
+  const root = Object.assign(document.createElement('div'), { id: 'print-root', className: dialog.className });
+  root.append(dialog.querySelector('.dialog-heading h2').cloneNode(true),
+    ...[...dialog.children].filter(child => !child.matches('.dialog-heading, .settings-footer')).map(child => child.cloneNode(true)));
+  root.querySelectorAll('[id]').forEach(element => element.removeAttribute('id'));
+  document.body.append(root);
+  button.disabled = true;
+  status.hidden = false;
+  status.replaceChildren('Exporting…');
+  try {
+    await Promise.all([...root.querySelectorAll('img')].map(image => image.decode().catch(() => {})));
+    const result = await call('exportPdf', { chapter: dialog.id });
+    if (result.canceled) { status.hidden = true; return; }
+    const open = node('button', 'Open', 'link-button');
+    open.type = 'button';
+    open.addEventListener('click', () => call('openExport').catch(error => status.replaceChildren(error.message)));
+    status.replaceChildren(`Saved ${result.name}. `, open);
+  } catch (error) { status.replaceChildren(error.message); }
+  finally { root.remove(); button.disabled = false; }
+}
+$$('[data-export]').forEach(button => button.addEventListener('click', () => exportChapter(button.closest('dialog'), button)));
 $('#why-try').addEventListener('click', () => {
   $('#why-dialog').close();
   selectRoute(`mcp-${transport}`);
@@ -741,7 +850,7 @@ $('#composer').addEventListener('submit', async event => {
   if (busy || !current.connected || !question) return;
   current.error = ''; current.trace = []; current.question = question; current.open = new Set();
   current.messages.push({ role: 'user', text: question });
-  current.pending = { status: firstStatus[route], reasoning: '', started: performance.now() };
+  current.pending = { status: firstStatus[route], reasoning: '', text: '', started: performance.now() };
   current.draft = '';
   $('#question').value = '';
   renderMessages(); renderTrace();
@@ -774,22 +883,6 @@ $('#reset').addEventListener('click', async () => {
   } catch (error) { showError(error); }
 });
 $('#clear-trace').addEventListener('click', () => { Object.assign(sessions[route], { trace: [], question: '', open: new Set() }); renderTrace(); });
-$('#settings-open').addEventListener('click', showSettings);
-$('#settings-close').addEventListener('click', () => $('#settings-dialog').close());
-$('#settings-form').addEventListener('submit', async event => {
-  event.preventDefault(); setBusy(true);
-  try {
-    const result = await call('settings', Object.fromEntries(new FormData(event.currentTarget)));
-    settings = result.settings; auth = result.auth; clearSessions();
-    feedback('Settings saved. Sign in to the CLI or APIs as needed, then close this panel and connect.');
-    text('#auth-status', 'Remote MCP: not signed in. A2A / REST: not signed in.');
-  } catch (error) { feedback(error.message, true); }
-  finally { setBusy(false); }
-});
-$('#local-login').addEventListener('click', () => settingsAction('localLogin'));
-$('#accept-eula').addEventListener('click', () => settingsAction('acceptEula'));
-$('#api-login').addEventListener('click', () => settingsAction('signIn'));
-$('#signout').addEventListener('click', () => settingsAction('signOut'));
 document.addEventListener('click', event => {
   const link = event.target.closest('a[href]');
   if (!link) return;
@@ -798,12 +891,28 @@ document.addEventListener('click', event => {
     document.getElementById(link.getAttribute('href').slice(1))?.scrollIntoView({ block: 'nearest' });
     return;
   }
-  call('openLink', { url: link.href }).catch(error => $('#settings-dialog').open ? feedback(error.message, true) : showError(error));
+  call('openLink', { url: link.href }).catch(error => $('#connect-dialog').open ? feedback(error.message, true) : showError(error));
 });
 
 window.workiq?.onTrace(event => {
   const current = sessions[event.route];
   if (!current) return;
+  // Streamed model tokens go into the pending answer. They are not steps, so Flow doesn't store them.
+  if (event.direction === 'delta') {
+    const { pending } = current;
+    if (!pending) return;
+    const { id, text: delta, reasoning, part } = event.body;
+    // A new model call starts a new draft, so only the last call's text remains: the answer.
+    if (id !== pending.id) Object.assign(pending, { id, text: '', reasoning: '', part });
+    if (reasoning) pending.reasoning += (pending.reasoning && part !== pending.part ? '\n\n' : '') + reasoning;
+    pending.part = part ?? pending.part;
+    pending.text += delta;
+    const status = delta ? 'The model is writing…' : 'The model is reasoning…';
+    const changed = status !== pending.status;
+    pending.status = status;
+    if (event.route === route) { renderPending(); if (changed) renderTrace(); }
+    return;
+  }
   current.trace.push(event);
   if (event.direction === 'disconnected') current.connected = false;
   if (current.pending) {
@@ -817,6 +926,31 @@ window.workiq?.onTrace(event => {
   }
   if (event.route === route) { renderTrace(); renderStatus(); current.pending ? renderPending() : renderMessages(); }
 });
+// How to: one step at a time, through the arrows, the dots or the arrow keys. It opens once, on the first start;
+// the ? button in the header opens it again at step 1.
+const howtoSteps = $$('.howto-steps > li');
+const [howtoPrevious, howtoNext] = $$('.howto-arrow');
+let howtoStep = 0;
+function showHowtoStep(index) {
+  howtoStep = Math.min(Math.max(index, 0), howtoSteps.length - 1);
+  howtoSteps.forEach((step, i) => { step.inert = i !== howtoStep; });
+  $$('.howto-dots button').forEach((dot, i) => i === howtoStep ? dot.setAttribute('aria-current', 'step') : dot.removeAttribute('aria-current'));
+  // A disabled arrow hides; keep the focus in the dialog.
+  const focused = document.activeElement;
+  howtoPrevious.disabled = howtoStep === 0;
+  howtoNext.disabled = howtoStep === howtoSteps.length - 1;
+  if (focused === howtoPrevious && howtoPrevious.disabled) howtoNext.focus();
+  if (focused === howtoNext && howtoNext.disabled) $('#howto-dialog .primary').focus();
+}
+$$('[data-step-by]').forEach(arrow => arrow.addEventListener('click', () => showHowtoStep(howtoStep + Number(arrow.dataset.stepBy))));
+$$('.howto-dots button').forEach(dot => dot.addEventListener('click', () => showHowtoStep(Number(dot.dataset.step))));
+$('#howto-dialog').addEventListener('keydown', event => {
+  if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+  event.preventDefault();
+  showHowtoStep(howtoStep + (event.key === 'ArrowRight' ? 1 : -1));
+});
+$('#howto-dialog').addEventListener('close', () => { localStorage.setItem('howto-seen', '1'); showHowtoStep(0); });
+showHowtoStep(0);
 try {
   const initial = await call('initialize');
   sources = initial.sources; settings = initial.settings; auth = initial.auth;
@@ -825,3 +959,4 @@ try {
   }));
   renderRoute();
 } catch (error) { showError(error); }
+if (!localStorage.getItem('howto-seen')) $('#howto-dialog').showModal();

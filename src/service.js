@@ -2,9 +2,21 @@ import { createHttp, redact, ORIGIN } from './workiq/http.js';
 import { mcp } from './workiq/mcp.js';
 import { a2a } from './workiq/a2a.js';
 import { rest } from './workiq/rest.js';
-import { harness, azureModel } from './harness.js';
+import { harness, chatModel } from './harness.js';
 
 export const ROUTES = ['mcp-local', 'mcp-remote', 'a2a', 'rest'];
+
+// The routes a settings change affects. Both MCP routes use the model; each sign-in has its own routes.
+export function affectedRoutes(before, after) {
+  const changed = keys => keys.some(key => after[key] !== before[key]);
+  const apiKey = settings => (settings.llmAuth === 'key' ? settings.llmApiKey : '');
+  const model = changed(['llmEndpoint', 'llmDeployment', 'llmApi', 'llmReasoning', 'llmAuth']) || apiKey(after) !== apiKey(before);
+  return [
+    ...(model || changed(['localAccount']) ? ['mcp-local'] : []),
+    ...(model || changed(['mcpTenantId', 'mcpClientId']) ? ['mcp-remote'] : []),
+    ...(changed(['tenantId', 'clientId']) ? ['a2a', 'rest'] : changed(['agentId']) ? ['a2a'] : []),
+  ];
+}
 
 // The first Flow step of a connection: what the app does before its first call to Work IQ.
 function connectStage(route, user) {
@@ -51,7 +63,10 @@ export function createService(auth, emit, getSettings, mcpAuth = auth) {
           const settings = getSettings();
           const record = event => trace(route, event);
           if (route.startsWith('mcp-') && (!settings.llmEndpoint || !settings.llmDeployment)) {
-            throw new Error('Set the harness model (Azure OpenAI endpoint and deployment) in Connections first.');
+            throw new Error('Set the harness model (endpoint and model) first.');
+          }
+          if (route.startsWith('mcp-') && settings.llmAuth === 'key' && !settings.llmApiKey) {
+            throw new Error('Enter the model API key, or choose Microsoft Entra ID.');
           }
           record({ direction: 'stage', body: connectStage(route, (route === 'mcp-remote' ? mcpAuth : auth).status?.().username) });
           let session;
@@ -66,7 +81,7 @@ export function createService(auth, emit, getSettings, mcpAuth = auth) {
             });
             try {
               session = await harness({
-                connection, model: azureModel(settings), trace: record,
+                connection, model: chatModel(settings), trace: record,
                 name: `Deep Agents · ${settings.llmDeployment}`,
               });
             } catch (error) {
@@ -101,14 +116,14 @@ export function createService(auth, emit, getSettings, mcpAuth = auth) {
       }
     },
     stop() { pending?.controller.abort(); },
-    async close(force = false) {
+    async close(force = false, routes = ROUTES) {
       if (pending && !force) throw new Error('Finish or stop the current request before changing connections.');
       if (force && pending) {
         pending.controller.abort();
         await pending.done;
       }
-      const connections = [...sessions.values()];
-      sessions.clear();
+      const connections = routes.filter(route => sessions.has(route)).map(route => sessions.get(route));
+      routes.forEach(route => sessions.delete(route));
       await Promise.all(connections.map(session => session.close?.()));
     },
   };

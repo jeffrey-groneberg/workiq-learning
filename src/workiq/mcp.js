@@ -8,7 +8,7 @@ export async function mcp({ local, getToken, account, trace, signal, transport, 
   if (!transport) {
     if (local) {
       const command = workiq.getBinaryPath();
-      if (!command) throw new Error(`The pinned Work IQ CLI has no binary for ${process.platform}/${process.arch}. Use remote MCP.`);
+      if (!command) throw new Error(`No bundled Work IQ CLI for ${process.platform}/${process.arch}: the package ships none for this platform, or the file is missing. Reinstall with npm ci, or use remote MCP.`);
       transport = new StdioClientTransport({
         command, args: ['mcp', ...(account ? ['--account', account] : [])], stderr: 'pipe',
       });
