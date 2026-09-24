@@ -1,0 +1,54 @@
+---
+title: Work IQ integration lab
+description: Three ways to build Work IQ into your own tools, MCP, A2A and the REST API, each as a live chat next to the code that runs it.
+template: splash
+editUrl: false
+hero:
+  tagline: Three ways to build Work IQ into your own tools, MCP, A2A and the REST API, each as a live chat next to the code that runs it.
+  image:
+    html: '<img class="hero-demo" src="demo.gif" width="800" height="618" alt="A tour of the app with example data: an answer about the next meeting streams in, each call shows its latency, tokens and estimated Copilot Credits, then the code, the three routes and what each route can read and change." />'
+  actions:
+    - text: Choose a route
+      link: routes/
+      icon: right-arrow
+    - text: Download the app
+      link: getting-started/download/
+      icon: download
+      variant: minimal
+---
+
+import { Card, CardGrid, LinkCard } from '@astrojs/starlight/components';
+
+## Highlights
+
+<CardGrid>
+  <Card title="Live chats over your data" icon="comment">
+    Each route is a real chat over Microsoft 365 data, read with the signed-in user's permissions. There are no sample answers.
+  </Card>
+  <Card title="Every call in view" icon="list-format">
+    **Flow** shows each step between you, the model and Work IQ, with latency, tokens, a Copilot Credits estimate and the raw payloads.
+  </Card>
+  <Card title="The code that runs it" icon="seti:javascript">
+    **Code** shows the app's actual source beside the chat: a Deep Agents harness, A2A JSON-RPC and two REST calls.
+  </Card>
+  <Card title="Three routes, side by side" icon="random">
+    MCP, local or remote, with your own model; A2A to delegate a task; REST for a grounded chat inside your app.
+  </Card>
+  <Card title="Sign-in, explained" icon="padlock">
+    What each route needs to sign in, what an admin grants once, and the recommended setup for your own tool.
+  </Card>
+  <Card title="Windows, macOS and Linux" icon="laptop">
+    Download the app for x64 or Arm, or run it from source with Node.js.
+  </Card>
+</CardGrid>
+
+Every route needs a Microsoft 365 tenant with Work IQ enabled and a usage-based billing plan; both MCP routes also need a model with tool calling. See [What you need](getting-started/what-you-need/).
+
+## Explore the docs
+
+<CardGrid>
+  <LinkCard title="Getting started" description="Download the app, check what you need and take the tour." href="getting-started/download/" />
+  <LinkCard title="Routes" description="MCP, A2A and REST compared, with each route's wire format." href="routes/" />
+  <LinkCard title="Concepts" description="Capabilities, Work IQ vs. Microsoft Graph, authentication and Copilot Credits." href="concepts/capabilities/" />
+  <LinkCard title="Reference" description="The Work IQ MCP tools and every Connect setting." href="reference/mcp-tools/" />
+</CardGrid>

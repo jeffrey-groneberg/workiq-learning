@@ -1,0 +1,23 @@
+{
+  "name": "workiq-learning-docs",
+  "type": "module",
+  "version": "0.0.0",
+  "private": true,
+  "description": "The Work IQ integration lab documentation site: Astro with Starlight and the Terminal theme.",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "dev": "node scripts/sync-assets.mjs && astro dev",
+    "build": "node scripts/sync-assets.mjs && astro build",
+    "preview": "astro preview",
+    "astro": "astro"
+  },
+  "dependencies": {
+    "@astrojs/mdx": "5.0.6",
+    "@astrojs/starlight": "0.39.3",
+    "astro": "6.4.8",
+    "sharp": "0.35.3",
+    "starlight-theme-terminal": "1.2.0"
+  }
+}

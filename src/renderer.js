@@ -632,6 +632,9 @@ function openConnectDialog() {
   needs.querySelectorAll('[data-mcp]').forEach(line => { line.hidden = route !== `mcp-${line.dataset.mcp}`; });
   $('#connect-needs').replaceChildren(needs, $('.howto-steps .needs-all').cloneNode(true));
   $$('#connect-form fieldset').forEach(fieldset => { fieldset.hidden = !routeFields[route].includes(fieldset.dataset.for); });
+  // Downloads don't include the Work IQ CLI, so local MCP says how to install it when main finds none.
+  $('#cli-missing').hidden = true;
+  if (route === 'mcp-local') call('findCli').then(found => { $('#cli-missing').hidden = Boolean(found); }, () => {});
   $$('#connect-form [name]').forEach(input => { input.value = settings[input.name] ?? ''; });
   $('#connect-account').hidden = !auth[scope]?.signedIn;
   if (scope && auth[scope].signedIn) text('#connect-account-text', signedInWith(scope, auth[scope]));

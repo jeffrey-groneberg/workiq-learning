@@ -1,0 +1,145 @@
+/* The accent and greys of the microsoft/wiqd docs, whose purple comes from its banner's gradient. */
+:root {
+  --sl-color-accent-low: #1e1033;
+  --sl-color-accent: #a855f7;
+  --sl-color-accent-high: #e9d5ff;
+  --sl-color-white: #ffffff;
+  --sl-color-gray-1: #eeeef0;
+  --sl-color-gray-2: #c2c2c6;
+  --sl-color-gray-3: #8b8b96;
+  --sl-color-gray-4: #585861;
+  --sl-color-gray-5: #38363f;
+  --sl-color-gray-6: #26242d;
+  --sl-color-black: #17151e;
+}
+
+:root[data-theme='dark'] {
+  --sl-color-accent: #c084fc;
+  --sl-color-accent-high: #f3e8ff;
+}
+
+:root[data-theme='light'] {
+  --sl-color-accent-low: #f3e8ff;
+  --sl-color-accent: #9333ea;
+  --sl-color-accent-high: #4c1d95;
+  --sl-color-white: #17151e;
+  --sl-color-gray-1: #26242d;
+  --sl-color-gray-2: #38363f;
+  --sl-color-gray-3: #585861;
+  --sl-color-gray-4: #8b8b96;
+  --sl-color-gray-5: #c2c2c6;
+  --sl-color-gray-6: #eeeef0;
+  --sl-color-black: #ffffff;
+}
+
+/* Starlight's search, styled like the wiqd docs' own: a bordered pill with the shortcut, and a centred dialog.
+   Unlayered, so it wins over the Starlight and Terminal layers. */
+site-search button[data-open-modal] {
+  gap: 0.5rem;
+  min-height: 2rem;
+  padding: 0.3rem 0.75rem;
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 0.5rem;
+  background-color: var(--sl-color-bg-nav);
+  color: var(--sl-color-gray-2);
+  font-size: var(--sl-text-sm);
+  line-height: 1;
+}
+site-search button[data-open-modal]:hover {
+  border-color: var(--sl-color-accent);
+  color: var(--sl-color-white);
+}
+site-search button[data-open-modal] kbd kbd {
+  padding: 0.1em 0.35em;
+  border: 1px solid var(--sl-color-hairline);
+  border-radius: 0.25rem;
+  background: var(--sl-color-bg);
+  color: var(--sl-color-gray-2);
+  font-family: inherit;
+  font-size: 0.7em;
+}
+@media (min-width: 50rem) {
+  site-search dialog {
+    width: min(90vw, 600px);
+    max-height: 80vh;
+    margin: 3.5rem auto 0;
+    border: 1px solid var(--sl-color-hairline);
+    border-radius: 0.75rem;
+    background: var(--sl-color-bg);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+  }
+}
+site-search dialog::backdrop {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+}
+
+/* The app's illustrations: rounded, and dimmed a little in dark mode, as the app does. */
+.sl-markdown-content img,
+.route-cards img {
+  border-radius: 0.75rem;
+}
+:root[data-theme='dark'] .sl-markdown-content img,
+:root[data-theme='dark'] .route-cards img {
+  filter: brightness(0.86);
+}
+
+/* Compare the routes: each route's illustration, name and one line, as a link to its page. */
+.route-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr));
+  gap: 1rem;
+  margin-top: 1.5rem;
+}
+.route-cards a {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding-bottom: 1rem;
+  overflow: hidden;
+  border: 1px solid var(--sl-color-hairline-light);
+  border-radius: 0.75rem;
+  background: var(--sl-color-bg-nav);
+  color: var(--sl-color-gray-2);
+  text-decoration: none;
+}
+.route-cards a:hover {
+  border-color: var(--sl-color-accent);
+}
+.route-cards img {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 7 / 4;
+  margin-bottom: 0.4rem;
+  border-radius: 0;
+  object-fit: cover;
+}
+.route-cards strong {
+  padding: 0 1rem;
+  color: var(--sl-color-white);
+  font-size: var(--sl-text-lg);
+}
+.route-cards span {
+  padding: 0 1rem;
+  font-size: var(--sl-text-sm);
+}
+
+/* Status badges in tables, such as Capabilities, stay on one line. */
+.sl-markdown-content td .sl-badge {
+  white-space: nowrap;
+}
+
+/* The home page: the title breaks between words only, and the demo GIF gets more room than Starlight's 25rem. */
+.hero [data-page-title] {
+  hyphens: manual;
+}
+.hero-html .hero-demo {
+  width: 100%;
+  height: auto;
+  border-radius: 0.75rem;
+}
+@media (min-width: 50rem) {
+  .hero > .hero-html {
+    width: min(100%, 34rem);
+  }
+}

@@ -22,7 +22,7 @@ export function affectedRoutes(before, after) {
 function connectStage(route, user) {
   const token = `Every request sends a delegated WorkIQAgent.Ask token${user ? ` for ${user}` : ''}; no client secret.`;
   return {
-    'mcp-local': { title: 'Start the Work IQ CLI', detail: 'Runs the bundled CLI as a child process (workiq mcp) that speaks MCP over stdin and stdout. The CLI signs in with its own token cache.' },
+    'mcp-local': { title: 'Start the Work IQ CLI', detail: 'Runs the Work IQ CLI as a child process (workiq mcp) that speaks MCP over stdin and stdout. The CLI signs in with its own token cache.' },
     'mcp-remote': { title: 'Connect to the hosted MCP endpoint', detail: `Streamable HTTP to ${ORIGIN}/mcp. ${token}` },
     a2a: { title: 'Use your Microsoft sign-in', detail: token },
     rest: { title: 'Use your Microsoft sign-in', detail: token },

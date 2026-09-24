@@ -1,0 +1,59 @@
+---
+title: Connect settings
+description: Every field in the app's Connect dialogs, the .env variables that pre-fill them, and what the app keeps.
+---
+
+Each tab's **Connect** asks only for its route's settings, and the app saves them for the next start.
+
+## Fields by route
+
+| Route | Group | Field | Required | What it's for |
+| --- | --- | --- | --- | --- |
+| MCP, local | Work IQ CLI | CLI account | No | The account the CLI signs in with; empty uses the CLI's existing account. **Sign in to CLI** and **Accept CLI EULA** run the CLI's own commands. |
+| MCP, remote | Sign-in | Directory (tenant) ID, Application (client) ID | No | Your own registration. Leave both empty to use the published Work IQ MCP client, with the callback port 12798. |
+| A2A | Your app registration | Directory (tenant) ID, Application (client) ID | Yes | The public client that A2A and REST share: Mobile and desktop platform, the redirect `http://localhost`, delegated `WorkIQAgent.Ask` with admin consent, and no client secret. |
+| A2A | Agent | Agent ID | No | The complete, opaque ID of the agent to ask, for example one that `list_agents` returns in the MCP tab. Empty uses Microsoft 365 Copilot. |
+| REST API | Your app registration | Directory (tenant) ID, Application (client) ID | Yes | The same registration as for A2A. |
+
+Both MCP routes also need the harness model.
+
+## The harness model
+
+Deep Agents runs in the app and calls your model. The model must support tool calling, and it receives the Work IQ tool results, which contain your Microsoft 365 data.
+
+| Field | What to enter |
+| --- | --- |
+| **Endpoint** | An Azure OpenAI or Foundry resource or project URL, such as `https://my-resource.openai.azure.com`; the app adds `/openai/v1`. For other providers, the base URL, such as `https://api.openai.com/v1`, or `http://localhost:11434/v1` for a local server. |
+| **Model** | The model's name; on Azure, the deployment name. |
+| **API** | **Responses API**, which streams reasoning summaries, or **Chat Completions API**, which most providers offer. |
+| **Authentication** | **Microsoft Entra ID**, on Azure endpoints only, through `DefaultAzureCredential`: it uses your existing Azure sign-in, such as `az login`. Your account needs a data-plane role on the resource, Cognitive Services OpenAI User for Azure OpenAI or Cognitive Services User for Foundry models. Or **API key**, for any endpoint. |
+| **API key** | Kept in memory and never saved. For a local server that needs no key, enter any value. |
+| **Reasoning** | Off, Low, Medium or High. It adds latency, and not every model accepts it. |
+
+**Test model** makes one short call with a test tool, with no Work IQ data, and lists each check.
+
+## Pre-fill with `.env`
+
+When you run the app from source, a `.env` file in the repository's root pre-fills the Connect dialogs; the downloads don't read one. Copy `.env.example` to `.env` and fill in what you need. Settings you save in the app take precedence.
+
+| Variable | Fills |
+| --- | --- |
+| `WORKIQ_TENANT_ID`, `WORKIQ_CLIENT_ID` | A2A and REST: your app registration |
+| `WORKIQ_MCP_TENANT_ID`, `WORKIQ_MCP_CLIENT_ID` | Remote MCP: your own registration; empty uses the published client |
+| `WORKIQ_LLM_ENDPOINT` | Model: Endpoint |
+| `WORKIQ_LLM_DEPLOYMENT` | Model: Model |
+| `WORKIQ_LLM_API` | Model: API, `responses` (the default) or `chat` |
+| `WORKIQ_LLM_REASONING` | Model: Reasoning, `low`, `medium` or `high`; empty uses the model's default |
+| `WORKIQ_LLM_API_KEY` | Model: API key, which then selects API-key authentication |
+
+:::caution
+`WORKIQ_LLM_API_KEY` is a secret, so keep `.env` private; Git ignores it. The app sends the key only to the host of `WORKIQ_LLM_ENDPOINT`. The IDs aren't secrets. Never put access tokens or client secrets in `.env`.
+:::
+
+## What the app keeps
+
+- **Your settings**, without the API key, in `settings.json` in the app's user data folder: `~/Library/Application Support/workiq-showcase` on macOS, `%APPDATA%\workiq-showcase` on Windows and `~/.config/workiq-showcase` on Linux.
+- **The API key**, in memory only until you quit. When you leave the field empty, the app reuses it only for the same endpoint host.
+- **Your sign-ins** for remote MCP, A2A and REST, in memory until you quit or sign out.
+- **The Work IQ CLI's sign-in**, in the CLI's own token cache.
+- **Flow's requests and responses**, in memory only, with credentials redacted.

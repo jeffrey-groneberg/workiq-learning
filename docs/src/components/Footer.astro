@@ -1,0 +1,18 @@
+---
+// Starlight's footer, with a line under it on where the pictures come from.
+import Default from '@astrojs/starlight/components/Footer.astro';
+---
+
+<Default {...Astro.props} />
+<p class="disclosure">
+	The illustrations are AI-generated (MAI-Image-2.6). The screenshots and the demo show example data.
+</p>
+
+<style>
+	.disclosure {
+		margin-top: 1.5rem;
+		color: var(--sl-color-gray-3);
+		font-size: var(--sl-text-xs);
+		text-align: center;
+	}
+</style>

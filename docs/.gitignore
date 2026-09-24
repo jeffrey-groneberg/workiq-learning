@@ -1,0 +1,5 @@
+# Build output, Astro's cache, and the app's images that scripts/sync-assets.mjs copies in for each build.
+dist/
+.astro/
+node_modules/
+src/assets/app/

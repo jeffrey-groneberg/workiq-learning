@@ -141,7 +141,7 @@ test('desktop UI: real source, protocol switching, error states, chat lifecycle 
     const panel = dialog.querySelector('#connect-needs'), shows = phrase => panel.innerText.includes(phrase);
     return {
       rows: [...panel.querySelectorAll('tbody tr')].filter(row => !row.hidden).map(row => row.dataset.route),
-      local: shows('bundled Work IQ CLI'), remote: shows('published MCP client'), everyRoute: shows('Every route also needs'),
+      local: shows('registration, in the Work IQ CLI'), remote: shows('published MCP client'), everyRoute: shows('Every route also needs'),
       inView: dialog.scrollTop === 0 && panel.getBoundingClientRect().bottom <= dialog.getBoundingClientRect().bottom,
     };
   });

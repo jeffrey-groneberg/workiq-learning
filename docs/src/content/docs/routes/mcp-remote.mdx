@@ -1,0 +1,73 @@
+---
+title: MCP, remote
+description: The same harness and model, calling the hosted Work IQ MCP server over Streamable HTTP.
+---
+
+import { LinkCard, Steps } from '@astrojs/starlight/components';
+
+**The same harness. No local process.** The harness code is identical to [local MCP](../mcp-local/); only the transport changes. Your model discovers the tools on the hosted Work IQ MCP server and chooses among them.
+
+![A robot at a laptop with nothing else on the desk; one line runs straight to a toolbox mounted on a tall cabinet of drawers.](../../../assets/app/route-mcp-remote.jpg)
+
+## When to choose it
+
+Choose remote MCP for the harness pattern without shipping or running the Work IQ CLI: the harness talks to the hosted Work IQ MCP server over HTTPS. It signs in with the published Work IQ MCP client, or with your own app registration, so that consent prompts and sign-in logs show your tool's name: see [Remote MCP with your own registration](../../concepts/authentication/#remote-mcp-with-your-own-registration).
+
+## Request path
+
+```text
+Your question
+  > Deep Agents + your model (this app)
+  > https://workiq.svc.cloud.microsoft/mcp
+  > Work IQ tools
+```
+
+## Who does the reasoning?
+
+The same Deep Agents loop, with the same read-oriented tools, as local MCP. In your own harness, the model can combine these tools with your other systems.
+
+## On the wire
+
+Each MCP message is an HTTPS `POST` to `https://workiq.svc.cloud.microsoft/mcp` (Streamable HTTP), with a delegated token for the scope `api://workiq.svc.cloud.microsoft/WorkIQAgent.Ask`. The JSON-RPC messages are the same as over stdio; the MCP SDK adds the protocol's own headers.
+
+```http title="A tool call over Streamable HTTP"
+POST /mcp HTTP/1.1
+Host: workiq.svc.cloud.microsoft
+Authorization: Bearer <delegated token>
+Content-Type: application/json
+Accept: application/json, text/event-stream
+
+{"jsonrpc":"2.0","id":2,"method":"tools/call","params":{"name":"ask","arguments":{"question":"What did Sarah say about the launch date?"}}}
+```
+
+The app sends the token only to `workiq.svc.cloud.microsoft` and treats a redirect as an error.
+
+## Authentication
+
+Browser sign-in uses the public client ID `ba081686-5d24-4bc6-a0d6-d034ecffed87` and the callback port 12798 from the published Work IQ MCP plugin, unless you enter your own registration when you connect. The model signs in with Microsoft Entra ID through `DefaultAzureCredential`, or with an API key. Tenant consent still applies. See [Authentication](../../concepts/authentication/#mcp-remote).
+
+## What it costs
+
+The same two charges as local MCP: Copilot Credits for the Work IQ calls, and your model's tokens. The app counts no credits for the MCP handshake or `tools/list`. See [Copilot Credits](../../concepts/copilot-credits/).
+
+:::caution[Keep in mind]
+The app doesn't copy credentials from Copilot or other hosts. Tool results are sent to your model endpoint. The A2A and REST routes use your own app registration instead.
+:::
+
+## Try it in the app
+
+<Steps>
+
+1. Open the **MCP server** tab, choose **Remote** and click **Connect**.
+2. Leave **Directory (tenant) ID** and **Application (client) ID** empty to use the published Work IQ MCP client, or enter your own registration.
+3. Enter your model and check it with **Test model**.
+4. Click **Connect** and finish the sign-in in your browser. The published client returns to port 12798 on your computer.
+5. Ask a question and follow each call in **Flow**.
+
+</Steps>
+
+## The code
+
+The harness is [`src/harness.js`](https://github.com/jeffrey-groneberg/workiq-learning/blob/main/src/harness.js). [`src/workiq/mcp.js`](https://github.com/jeffrey-groneberg/workiq-learning/blob/main/src/workiq/mcp.js) adds the token to each request, and [`src/auth.js`](https://github.com/jeffrey-groneberg/workiq-learning/blob/main/src/auth.js) signs in with MSAL.
+
+<LinkCard title="Work IQ MCP overview" description="The hosted MCP server and its tools." href="https://learn.microsoft.com/en-us/microsoft-365/copilot/extensibility/work-iq/mcp/overview" />
