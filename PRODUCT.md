@@ -35,9 +35,11 @@ different intelligence products.
 - Delegated Microsoft Entra authentication and tenant billing/consent prerequisites.
 - Local MCP means a local process, not offline Work IQ intelligence.
 - Use MCP tool discovery; do not assume local and remote tool parity.
-- The MCP tab runs a Deep Agents harness: a configurable Azure OpenAI deployment
-  (endpoint and deployment set in Connections, authenticated with the Azure CLI
-  login) chooses among read-oriented Work IQ MCP tools. Write tools are withheld.
+- The MCP tab runs a Deep Agents harness: a configurable model (Azure OpenAI, a
+  Foundry model or any OpenAI-compatible endpoint, set and tested when connecting,
+  authenticated with Microsoft Entra ID through DefaultAzureCredential or an API key)
+  chooses among read-oriented Work IQ MCP tools and streams its answer. Write tools
+  are withheld.
 - A2A delegation and the REST conversation use Work IQ's hosted reasoning and
   need no model of the user's own.
 - Token optimization is out of scope: use Deep Agents as-is and raise deployment
@@ -48,7 +50,9 @@ different intelligence products.
 ## Brand Commitments
 
 Minimal, practical and easy to walk through. Prioritize the chat and the code,
-not decorative imagery or a marketing landing page.
+not a marketing landing page. Text-free illustrations (MAI-Image-2.6, one
+consistent style) make each route and explanation recognizable; the facts stay in
+the HTML beside them.
 
 ## Evidence on Hand
 

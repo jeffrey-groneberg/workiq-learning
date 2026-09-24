@@ -4,31 +4,96 @@
   "title": "Design System: Work IQ showcase",
   "extensions": {
     "colorMeta": {
-      "cp-accent": { "role": "primary", "displayName": "Rose" },
-      "cp-accent-dark": { "role": "primary", "displayName": "Dark-theme rose" },
-      "cp-bg": { "role": "neutral", "displayName": "Warm canvas" },
-      "cp-bg-dark": { "role": "neutral", "displayName": "Warm charcoal canvas" },
-      "cp-text-muted": { "role": "neutral", "displayName": "Secondary text" },
-      "cp-text-muted-dark": { "role": "neutral", "displayName": "Effective dark secondary text (body override)" }
+      "cp-accent": {
+        "role": "primary",
+        "displayName": "Rose"
+      },
+      "cp-accent-dark": {
+        "role": "primary",
+        "displayName": "Dark-theme rose"
+      },
+      "cp-bg": {
+        "role": "neutral",
+        "displayName": "Warm canvas"
+      },
+      "cp-bg-dark": {
+        "role": "neutral",
+        "displayName": "Warm charcoal canvas"
+      },
+      "cp-text-muted": {
+        "role": "neutral",
+        "displayName": "Secondary text"
+      },
+      "cp-text-muted-dark": {
+        "role": "neutral",
+        "displayName": "Effective dark secondary text (body override)"
+      }
     },
     "typographyMeta": {
-      "body": { "displayName": "Body", "purpose": "Default interface and conversation text; replies loosen line height." },
-      "label": { "displayName": "Label", "purpose": "Field labels, compact semibold actions and inspector tabs." },
-      "metadata": { "displayName": "Metadata", "purpose": "Message timing, composer hints and toolbar annotations." },
-      "code": { "displayName": "Source", "purpose": "Line-numbered application source." },
-      "trace": { "displayName": "Trace", "purpose": "Request/response JSON and discovered-server details." }
+      "body": {
+        "displayName": "Body",
+        "purpose": "Default interface and conversation text; replies loosen line height."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Field labels, compact semibold actions and inspector tabs."
+      },
+      "metadata": {
+        "displayName": "Metadata",
+        "purpose": "Message timing, composer hints and toolbar annotations."
+      },
+      "code": {
+        "displayName": "Source",
+        "purpose": "Line-numbered application source."
+      },
+      "trace": {
+        "displayName": "Trace",
+        "purpose": "Request/response JSON and discovered-server details."
+      }
     },
     "shadows": [
-      { "name": "cp-shadow-light", "value": "0 18px 48px rgba(0, 0, 0, 0.12)", "purpose": "Dialogs in the light theme; not working panes." },
-      { "name": "cp-shadow-dark", "value": "0 18px 48px rgba(0, 0, 0, 0.32)", "purpose": "Dialogs in the dark theme; not working panes." }
+      {
+        "name": "cp-shadow-light",
+        "value": "0 18px 48px rgba(0, 0, 0, 0.12)",
+        "purpose": "Dialogs in the light theme; not working panes."
+      },
+      {
+        "name": "cp-shadow-dark",
+        "value": "0 18px 48px rgba(0, 0, 0, 0.32)",
+        "purpose": "Dialogs in the dark theme; not working panes."
+      },
+      {
+        "name": "howto-arrow",
+        "value": "0 2px 8px rgba(0, 0, 0, 0.14)",
+        "purpose": "The How to arrows where they overlap a screenshot; the only lifted control."
+      }
     ],
     "motion": [
-      { "name": "button-background", "value": "background 120ms ease-out", "purpose": "Authored button hover transition." },
-      { "name": "reduced-motion", "value": "none", "purpose": "Under prefers-reduced-motion: reduce, transitions are disabled and scroll-behavior is auto, both with !important." }
+      {
+        "name": "button-background",
+        "value": "background 120ms ease-out",
+        "purpose": "Authored button hover transition."
+      },
+      {
+        "name": "howto-step",
+        "value": "opacity 180ms ease-out, visibility 180ms",
+        "purpose": "How to steps crossfade; the step dots change color over the same 180ms."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "none",
+        "purpose": "Under prefers-reduced-motion: reduce, transitions are disabled and scroll-behavior is auto, both with !important."
+      }
     ],
     "breakpoints": [
-      { "name": "compact", "value": "980px" },
-      { "name": "stacked", "value": "740px" }
+      {
+        "name": "compact",
+        "value": "980px"
+      },
+      {
+        "name": "stacked",
+        "value": "740px"
+      }
     ]
   },
   "components": [
@@ -44,8 +109,8 @@
       "name": "Secondary button",
       "kind": "button",
       "refersTo": "button-secondary",
-      "description": "The standard bordered action used for Connections and sign-in controls.",
-      "html": "<button class=\"ds-button-secondary\" type=\"button\">Connections</button>",
+      "description": "The standard bordered action used for dialog, CLI and sign-in controls.",
+      "html": "<button class=\"ds-button-secondary\" type=\"button\">Authentication</button>",
       "css": ".ds-button-secondary { font: 600 14px/1.5 \"Segoe UI\", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif; min-height: 36px; padding: 7px 14px; border: 1px solid var(--cp-border); border-radius: .625rem; background: var(--cp-surface); color: var(--cp-text); cursor: pointer; transition: background 120ms ease-out; } .ds-button-secondary:hover:not(:disabled) { background: var(--cp-surface-soft); border-color: var(--cp-border-strong); } .ds-button-secondary:disabled { cursor: not-allowed; color: var(--cp-text-muted); background: var(--cp-surface-soft); } .ds-button-secondary:focus-visible { outline: 2px solid var(--cp-accent); outline-offset: 3px; } @media (prefers-reduced-motion: reduce) { .ds-button-secondary { transition: none !important; } }"
     },
     {
@@ -114,9 +179,21 @@
       "Flat, bordered working panes; modal-only shadow."
     ],
     "rules": [
-      { "name": "The State Before Decoration Rule", "body": "Rose marks primary actions, selections, busy status and focus; readiness and errors retain explicit text labels alongside their color cues.", "section": "colors" },
-      { "name": "The Code Has Its Own Rhythm Rule", "body": "Source, request traces and context identifiers use the mono stack; interface controls and conversation prose use the UI stack.", "section": "typography" },
-      { "name": "The Flat Work, Modal Lift Rule", "body": "Working panes are flat and border-separated; dialogs supply the modal shadow and backdrop.", "section": "elevation" }
+      {
+        "name": "The State Before Decoration Rule",
+        "body": "Rose marks primary actions, selections, busy status and focus; readiness and errors retain explicit text labels alongside their color cues.",
+        "section": "colors"
+      },
+      {
+        "name": "The Code Has Its Own Rhythm Rule",
+        "body": "Source, request traces and context identifiers use the mono stack; interface controls and conversation prose use the UI stack.",
+        "section": "typography"
+      },
+      {
+        "name": "The Flat Work, Modal Lift Rule",
+        "body": "Working panes are flat and border-separated; dialogs supply the modal shadow and backdrop.",
+        "section": "elevation"
+      }
     ],
     "dos": [
       "Do keep UI and code typography roles separate.",

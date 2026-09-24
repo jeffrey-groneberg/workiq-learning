@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { createHttp, ORIGIN, redact } from '../src/workiq/http.js';
 import { rest, readRestReply } from '../src/workiq/rest.js';
 import { a2a, readA2AReply } from '../src/workiq/a2a.js';
-import { createAuth, validateSettings } from '../src/auth.js';
+import { createAuth, validateSettings, storable, publicSettings, keptKey, sameOrigin } from '../src/auth.js';
 
 test('REST uses the stable routes, required locationHint and one conversation per chat', async () => {
   const calls = [];
@@ -162,19 +162,42 @@ test('redaction covers nested credentials, bearer text and JWT strings', () => {
 });
 
 test('settings accept IDs, not tokens; remote APIs do not silently use CLI credentials', async () => {
-  const empty = { tenantId: '', clientId: '', agentId: '', localAccount: '', llmEndpoint: '', llmDeployment: '', llmReasoning: '' };
+  const empty = { tenantId: '', clientId: '', mcpTenantId: '', mcpClientId: '', agentId: '', localAccount: '', llmEndpoint: '', llmDeployment: '', llmApi: 'responses', llmReasoning: '', llmAuth: 'entra', llmApiKey: '' };
   assert.equal(validateSettings({ ...empty, llmReasoning: 'low' }).llmReasoning, 'low');
   assert.throws(() => validateSettings({ ...empty, llmReasoning: 'extreme' }), /Reasoning must be/);
   assert.equal(validateSettings({ ...empty, llmEndpoint: 'https://res.openai.azure.com/' }).llmEndpoint, 'https://res.openai.azure.com');
-  for (const llmEndpoint of ['https://evil.example.com', 'http://res.openai.azure.com', 'https://res.openai.azure.com/openai/v1']) {
-    assert.throws(() => validateSettings({ ...empty, llmEndpoint }), /Azure OpenAI resource URL/);
+  // Any OpenAI-compatible endpoint with an API key; the Entra token goes only to Azure OpenAI and Foundry hosts.
+  for (const llmEndpoint of ['https://res.openai.azure.com/openai/v1', 'https://res.services.ai.azure.com/api/projects/test']) {
+    assert.equal(validateSettings({ ...empty, llmEndpoint }).llmEndpoint, llmEndpoint);
   }
-  assert.throws(() => validateSettings({ ...empty, llmDeployment: '../deployment' }), /deployment name/);
-  assert.throws(() => validateSettings({ tenantId: '', clientId: '', agentId: '', localAccount: '' }), /Invalid llmEndpoint/);
+  for (const llmEndpoint of ['https://api.example.com/v1', 'http://localhost:11434/v1', 'http://127.0.0.1:1234/v1']) {
+    assert.equal(validateSettings({ ...empty, llmEndpoint, llmAuth: 'key' }).llmEndpoint, llmEndpoint);
+    assert.throws(() => validateSettings({ ...empty, llmEndpoint }), /Entra ID works only with Azure OpenAI and Microsoft Foundry/);
+  }
+  assert.throws(() => validateSettings({ ...empty, llmEndpoint: 'https://res.openai.azure.com.example.com' }), /Entra ID works only/);
+  for (const llmEndpoint of ['http://res.openai.azure.com', 'http://192.168.1.5:8000/v1', 'https://user:secret@api.example.com', 'https://api.example.com/v1?key=secret', 'not a URL']) {
+    assert.throws(() => validateSettings({ ...empty, llmEndpoint, llmAuth: 'key' }), /https URL without credentials or query/);
+  }
+  for (const llmDeployment of ['gpt-5.1', 'llama3.1:8b', 'meta-llama/Llama-3.3-70B-Instruct']) {
+    assert.equal(validateSettings({ ...empty, llmDeployment }).llmDeployment, llmDeployment);
+  }
+  assert.throws(() => validateSettings({ ...empty, llmDeployment: 'gpt 5' }), /model name/);
+  assert.throws(() => validateSettings({ ...empty, llmApi: 'completions' }), /Responses or Chat Completions/);
+  const { llmEndpoint: _missing, ...partial } = empty;
+  assert.throws(() => validateSettings(partial), /Invalid llmEndpoint/);
   assert.deepEqual(validateSettings(empty), empty);
   assert.throws(() => validateSettings({ ...empty, clientId: 'Bearer token' }), /Entra GUID/);
   assert.throws(() => validateSettings({ ...empty, localAccount: 'not-an-email' }), /email address/);
   assert.throws(() => validateSettings({ ...empty, agentId: 'x'.repeat(513) }), /Invalid/);
+  assert.throws(() => validateSettings({ ...empty, mcpClientId: 'not-a-guid' }), /Entra GUID/);
+  assert.throws(() => validateSettings({ ...empty, llmAuth: 'password' }), /Entra ID or an API key/);
+  assert.throws(() => validateSettings({ ...empty, llmApiKey: 'two words' }), /must not contain spaces/);
+  // The model API key never reaches the settings file or the window.
+  const keyed = validateSettings({ ...empty, llmAuth: 'key', llmApiKey: 'test-key-value' });
+  assert.equal('llmApiKey' in storable(keyed), false);
+  assert.deepEqual(publicSettings(keyed), { ...storable(keyed), hasApiKey: true });
+  assert.ok(!JSON.stringify(publicSettings(keyed)).includes('test-key-value'));
+  assert.equal(publicSettings(empty).hasApiKey, false);
   const api = createAuth(async () => { throw new Error('Unexpected browser open'); });
   api.configure(empty);
   await assert.rejects(api.signIn(), /tenant ID and client ID/);
@@ -183,5 +206,17 @@ test('settings accept IDs, not tokens; remote APIs do not silently use CLI crede
   mcp.configure(empty);
   assert.equal(mcp.status().sharedClient, true);
   assert.equal(mcp.status().signedIn, false);
+  mcp.configure({ tenantId: '00000000-0000-0000-0000-000000000001', clientId: '00000000-0000-0000-0000-000000000002' });
+  assert.equal(mcp.status().sharedClient, false);
   assert.equal(api.status().sharedClient, false);
+});
+
+test('a kept API key is used again only for the host it was entered for', () => {
+  const previous = { llmEndpoint: 'https://api.provider-a.example/v1', llmApiKey: 'key-a' };
+  assert.equal(keptKey({ llmEndpoint: 'https://api.provider-a.example/v2', llmApiKey: '' }, previous), 'key-a');
+  assert.equal(keptKey({ llmEndpoint: 'https://api.provider-b.example/v1', llmApiKey: '' }, previous), '');
+  assert.equal(keptKey({ llmEndpoint: 'https://api.provider-a.example:8443/v1', llmApiKey: '' }, previous), '', 'another port is another host');
+  assert.equal(keptKey({ llmEndpoint: 'https://api.provider-b.example/v1', llmApiKey: 'key-b' }, previous), 'key-b');
+  assert.equal(keptKey({ llmEndpoint: '', llmApiKey: '' }, { llmEndpoint: '', llmApiKey: 'key-a' }), '');
+  assert.equal(sameOrigin('https://test.services.ai.azure.com/api/projects/test', 'https://test.services.ai.azure.com'), true);
 });
