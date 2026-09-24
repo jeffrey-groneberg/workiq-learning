@@ -23,7 +23,7 @@ const outputs = await packager({
   // A custom ignore replaces the packager's defaults, so it also leaves out .git, node_modules/.bin and the lockfile.
   ignore: path => {
     const relative = path.replaceAll('\\', '/');
-    if (/^\/(?:\.git|test|scripts|startup\.sh|\.github|\.impeccable|dist|release|test-results|playwright-report|package-lock\.json)(?:\/|$)/.test(relative)
+    if (/^\/(?:\.git|test|scripts|startup\.sh|\.github|\.impeccable|docs|dist|release|test-results|playwright-report|package-lock\.json)(?:\/|$)/.test(relative)
         || /^\/\.(?:env|npmrc)(?:\.|\/|$)/.test(relative) || /\/node_modules\/\.bin(?:\/|$)/.test(relative)) return true;
     const native = relative.match(/\/node_modules\/@microsoft\/workiq\/bin\/((?:win|osx|linux)-[^/]+)(?:\/|$)/);
     return Boolean(native && native[1] !== folder);
