@@ -64,6 +64,7 @@ jobs:
             echo "::error::A release build contains the Work IQ CLI."
             exit 1
           fi
+      # Each archive takes up to a minute, and the tools work silently, so the log names each one as it starts.
       - name: Archive
         run: |
           version=$(node -p "require('./package.json').version")
@@ -72,6 +73,7 @@ jobs:
           for arch in x64 arm64; do
             build="dist/Work IQ Showcase-$platform-$arch"
             name="Work-IQ-Showcase-$version-${{ matrix.os }}-$arch"
+            echo "Archiving $name"
             case "$RUNNER_OS" in
               macOS) ditto -c -k --sequesterRsrc --keepParent "$build/Work IQ Showcase.app" "release/$name.zip" ;;
               Windows) mv "$build" "dist/$name" && (cd dist && 7z a -tzip -bso0 "../release/$name.zip" "$name") ;;
